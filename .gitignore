@@ -1,0 +1,22 @@
+# secrets, never commit
+.env
+.env.local
+
+# real wardrobe photos: personal photos of the builder's actual belongings,
+# kept local-only by explicit choice (session 6). Public repo uses generated
+# placeholders in public/photos/ instead (see generate_placeholders.py).
+wardrobe/photos/
+
+# regenerable, not meaningful to version
+wardrobe/shopping_cache.json
+__pycache__/
+*.pyc
+
+# tooling artifacts
+.vercel
+.venv/
+venv/
+node_modules/
+
+# local Claude Code permission cache, machine-specific, not project docs
+.claude/settings.local.json

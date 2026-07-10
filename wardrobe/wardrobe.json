@@ -1,0 +1,442 @@
+{
+  "items": [
+    {
+      "id": "w_e4f311b889",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.13 PM (1).jpeg",
+      "file_hash": "e4f311b889c56668b59ff08502825d5591a929cc7f0878db868d90ef3079033e",
+      "display_name": "cream faux leather mini skirt with lace-up pockets",
+      "category": "bottom",
+      "subcategory": "skirt",
+      "article_type": "mini skirt",
+      "colour_primary": "cream",
+      "colour_secondary": "silver",
+      "formality": "casual",
+      "season": "all season",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": "regular",
+      "material": "leather",
+      "length_attributes": {
+        "sleeve": null,
+        "hem": "mini",
+        "rise": null
+      },
+      "style_tags": [
+        "edgy",
+        "statement",
+        "lace-up",
+        "mini"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 198,
+        "est_cost_usd": 0.000673
+      }
+    },
+    {
+      "id": "w_3f2092daf5",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.13 PM (2).jpeg",
+      "file_hash": "3f2092daf59b5c4271368d8d6687ba76d6aec8b33c1063c53e1686361fac458f",
+      "display_name": "maroon sleeveless peplum top",
+      "category": "top",
+      "subcategory": "blouse",
+      "article_type": "peplum top",
+      "colour_primary": "red",
+      "colour_secondary": null,
+      "formality": "smart casual",
+      "season": "summer",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": "regular",
+      "material": "polyester",
+      "length_attributes": {
+        "sleeve": "sleeveless",
+        "hem": "hip length",
+        "rise": null
+      },
+      "style_tags": [
+        "peplum",
+        "minimalist",
+        "sleeveless",
+        "fitted"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 198,
+        "est_cost_usd": 0.000673
+      }
+    },
+    {
+      "id": "w_adf1d28e98",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.13 PM (3).jpeg",
+      "file_hash": "adf1d28e9810785a55fbe3db18425ca201570549bb2c5fbd7d2aa9fa7402a05c",
+      "display_name": "blue denim mini skirt",
+      "category": "bottom",
+      "subcategory": "skirt",
+      "article_type": "denim skirt",
+      "colour_primary": "blue",
+      "colour_secondary": null,
+      "formality": "casual",
+      "season": "summer",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": "slim",
+      "material": "denim",
+      "length_attributes": {
+        "sleeve": null,
+        "hem": "mini",
+        "rise": "high"
+      },
+      "style_tags": [
+        "distressed",
+        "raw hem",
+        "casual"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 188,
+        "est_cost_usd": 0.000659
+      }
+    },
+    {
+      "id": "w_9fc97435de",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.13 PM.jpeg",
+      "file_hash": "9fc97435de0f526ec4976370e57eae9752700460f1c2f3d607faa616d1ad034a",
+      "display_name": "peach long-sleeve blouse",
+      "category": "top",
+      "subcategory": "blouse",
+      "article_type": "blouse",
+      "colour_primary": "pink",
+      "colour_secondary": null,
+      "formality": "smart casual",
+      "season": "summer",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": "relaxed",
+      "material": "chiffon",
+      "length_attributes": {
+        "sleeve": "long",
+        "hem": "cropped",
+        "rise": null
+      },
+      "style_tags": [
+        "boho",
+        "feminine",
+        "lightweight",
+        "sheer"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 197,
+        "est_cost_usd": 0.000672
+      }
+    },
+    {
+      "id": "w_5a351a0fb9",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.14 PM (1).jpeg",
+      "file_hash": "5a351a0fb91d159215d426f1f813ae3c1d4917b3494d4cb8bfb7d3a4129fffa7",
+      "display_name": "black embellished strapless peplum top",
+      "category": "top",
+      "subcategory": "peplum top",
+      "article_type": "strapless top",
+      "colour_primary": "black",
+      "colour_secondary": "gold",
+      "formality": "formal",
+      "season": "all season",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "other",
+      "fit": "slim",
+      "material": null,
+      "length_attributes": {
+        "sleeve": "sleeveless",
+        "hem": "waist",
+        "rise": null
+      },
+      "style_tags": [
+        "embellished",
+        "glamorous",
+        "party",
+        "strapless",
+        "peplum"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 207,
+        "est_cost_usd": 0.000687
+      }
+    },
+    {
+      "id": "w_731a6d4fa9",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.14 PM (2).jpeg",
+      "file_hash": "731a6d4fa94e261089a01ea2d85283948ec3b3e744b3e4d46ea0bcd7df442144",
+      "display_name": "white floral long-sleeve blouse",
+      "category": "top",
+      "subcategory": "blouse",
+      "article_type": "blouse",
+      "colour_primary": "white",
+      "colour_secondary": "black",
+      "formality": "casual",
+      "season": "summer",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "floral",
+      "fit": "relaxed",
+      "material": "cotton",
+      "length_attributes": {
+        "sleeve": "long",
+        "hem": "regular",
+        "rise": null
+      },
+      "style_tags": [
+        "boho",
+        "casual",
+        "feminine"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 189,
+        "est_cost_usd": 0.00066
+      }
+    },
+    {
+      "id": "w_b3cbd0160b",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.25.14 PM.jpeg",
+      "file_hash": "b3cbd0160b0c0b3ef492e1104a4294079f8343b8aead2bc898f8b6f60cd7f763",
+      "display_name": "blue peplum waistcoat",
+      "category": "top",
+      "subcategory": "waistcoat",
+      "article_type": "peplum waistcoat",
+      "colour_primary": "blue",
+      "colour_secondary": null,
+      "formality": "smart casual",
+      "season": "all season",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": "slim",
+      "material": "linen",
+      "length_attributes": {
+        "sleeve": "sleeveless",
+        "hem": "hip",
+        "rise": null
+      },
+      "style_tags": [
+        "smart",
+        "tailored",
+        "peplum",
+        "minimalist",
+        "workwear"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1506,
+        "output_tokens": 202,
+        "est_cost_usd": 0.000679
+      }
+    },
+    {
+      "id": "w_d908cad3ed",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.31.52 PM.jpeg",
+      "file_hash": "d908cad3ed6df9188f152530a35e6ada95284b946ecf3e21d9f8979416e19862",
+      "display_name": "dark brown satin cowl neck maxi dress",
+      "category": "dress",
+      "subcategory": "maxi dress",
+      "article_type": "cowl neck dress",
+      "colour_primary": "brown",
+      "colour_secondary": null,
+      "formality": "formal",
+      "season": "all season",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": "slim",
+      "material": "satin",
+      "length_attributes": {
+        "sleeve": "sleeveless",
+        "hem": "maxi",
+        "rise": null
+      },
+      "style_tags": [
+        "elegant",
+        "minimal",
+        "evening",
+        "slinky"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1542,
+        "output_tokens": 200,
+        "est_cost_usd": 0.000686
+      }
+    },
+    {
+      "id": "w_26b1918a65",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.32.25 PM.JPG",
+      "file_hash": "26b1918a6502f758e2bd3771f724cdc6116663570f2cc4f6dcfe244f964c97fe",
+      "display_name": "brown palm print button-down shirt",
+      "category": "top",
+      "subcategory": "shirt",
+      "article_type": "button-down shirt",
+      "colour_primary": "brown",
+      "colour_secondary": "orange",
+      "formality": "casual",
+      "season": "summer",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "other",
+      "fit": "regular",
+      "material": "cotton",
+      "length_attributes": {
+        "sleeve": "long",
+        "hem": "hip",
+        "rise": null
+      },
+      "style_tags": [
+        "tropical",
+        "casual",
+        "button-up"
+      ],
+      "multiple_items_detected": true,
+      "needs_review": true,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1534,
+        "output_tokens": 190,
+        "est_cost_usd": 0.000669
+      }
+    },
+    {
+      "id": "w_dc787cadb7",
+      "source": "wardrobe",
+      "image_ref": "WhatsApp Image 2026-07-09 at 10.33.21 PM.JPG",
+      "file_hash": "dc787cadb780ba6c3c31572246e2acf4b5fddf3b1a20a792e22cbe32a57eba03",
+      "display_name": "grey lace-up running sneakers",
+      "category": "footwear",
+      "subcategory": "trainers",
+      "article_type": "running shoes",
+      "colour_primary": "grey",
+      "colour_secondary": "black",
+      "formality": "casual",
+      "season": "all season",
+      "gender": "womenswear",
+      "price": null,
+      "currency": null,
+      "price_method": null,
+      "pattern": "solid",
+      "fit": null,
+      "material": "mesh",
+      "length_attributes": {
+        "sleeve": null,
+        "hem": null,
+        "rise": null
+      },
+      "style_tags": [
+        "athletic",
+        "sporty",
+        "performance",
+        "minimal"
+      ],
+      "multiple_items_detected": false,
+      "needs_review": false,
+      "extraction_meta": {
+        "model": "gemini-3.1-flash-lite",
+        "input_tokens": 1530,
+        "output_tokens": 192,
+        "est_cost_usd": 0.00067
+      }
+    }
+  ],
+  "run_log": [
+    {
+      "run_id": "395740da",
+      "timestamp": "2026-07-09 22:51:20",
+      "model": "gemini-2.5-flash",
+      "items_processed": 0,
+      "items_skipped_cached": 0,
+      "items_failed": [
+        "WhatsApp Image 2026-07-09 at 10.25.13 PM (1).jpeg",
+        "WhatsApp Image 2026-07-09 at 10.25.13 PM (2).jpeg",
+        "WhatsApp Image 2026-07-09 at 10.25.13 PM (3).jpeg",
+        "WhatsApp Image 2026-07-09 at 10.25.13 PM.jpeg",
+        "WhatsApp Image 2026-07-09 at 10.25.14 PM (1).jpeg",
+        "WhatsApp Image 2026-07-09 at 10.25.14 PM (2).jpeg",
+        "WhatsApp Image 2026-07-09 at 10.25.14 PM.jpeg",
+        "WhatsApp Image 2026-07-09 at 10.31.52 PM.jpeg",
+        "WhatsApp Image 2026-07-09 at 10.32.25 PM.JPG",
+        "WhatsApp Image 2026-07-09 at 10.33.21 PM.JPG",
+        "WhatsApp Image 2026-07-09 at 10.33.21 PM.jpeg",
+        "WhatsApp Image 2026-07-09 at 10.33.53 PM.JPG",
+        "WhatsApp Image 2026-07-09 at 10.33.53 PM.jpeg",
+        "WhatsApp Image 2026-07-09 at 10.35.44 PM.JPG"
+      ],
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "est_run_cost_usd": 0.0
+    },
+    {
+      "run_id": "2748d996",
+      "timestamp": "2026-07-10 00:10:05",
+      "model": "gemini-3.1-flash-lite",
+      "items_processed": 10,
+      "items_skipped_cached": 0,
+      "items_failed": [],
+      "input_tokens": 15148,
+      "output_tokens": 1961,
+      "est_run_cost_usd": 0.006729
+    }
+  ]
+}

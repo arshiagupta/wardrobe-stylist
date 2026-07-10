@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI wardrobe stylist</title>
+<style>
+  :root {
+    --bg: #faf8f5; --card: #ffffff; --ink: #1c1c1c; --muted: #6b6b6b;
+    --line: #e4e0da; --accent: #8a4b3b; --accent-ink: #ffffff; --warn: #a3701f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+    line-height: 1.45;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+  header h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  header p { color: var(--muted); margin: 0 0 28px; font-size: 0.95rem; }
+
+  form {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px; display: grid; gap: 14px; grid-template-columns: 1fr 1fr;
+  }
+  form .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+  input, select {
+    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+    font-size: 0.95rem; background: #fff; color: var(--ink);
+  }
+  button {
+    grid-column: 1 / -1; padding: 11px; border: none; border-radius: 8px;
+    background: var(--accent); color: var(--accent-ink); font-size: 1rem;
+    cursor: pointer; font-weight: 600;
+  }
+  button:disabled { opacity: 0.6; cursor: default; }
+
+  #status { margin: 16px 0; color: var(--muted); font-size: 0.9rem; }
+  #error { margin: 16px 0; color: #a12b2b; font-size: 0.9rem; display: none; }
+
+  .gaps-box {
+    margin: 20px 0; padding: 12px 14px; border-radius: 8px;
+    background: #fff7ec; border: 1px solid #ecd9b8; font-size: 0.88rem; color: var(--warn);
+  }
+
+  .outfit {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px; margin-bottom: 18px;
+  }
+  .outfit h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .outfit .reason { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; }
+
+  .items-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+  .item-card { width: 110px; text-align: center; }
+  .item-card img { width: 110px; height: 146px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+  .item-card .name { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+  .item-card .review-flag { font-size: 0.68rem; color: var(--warn); }
+
+  .fills { border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 6px; }
+  .fill-card {
+    display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;
+    font-size: 0.86rem;
+  }
+  .fill-card img { width: 64px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
+  .fill-card .fill-title { font-weight: 600; }
+  .fill-card .fill-meta { color: var(--muted); }
+  .fill-card a { color: var(--accent); }
+  .not-filled { font-size: 0.86rem; color: var(--muted); font-style: italic; }
+
+  .cost-strip {
+    margin-top: 22px; padding: 12px 14px; border-radius: 8px; background: #f1efe9;
+    font-size: 0.82rem; color: var(--muted);
+  }
+  .cost-strip strong { color: var(--ink); }
+  footer { margin-top: 40px; font-size: 0.78rem; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AI wardrobe stylist</h1>
+    <p>Looks at a real wardrobe first, suggests outfits from what's already owned, and finds a real purchasable product for anything genuinely missing.</p>
+  </header>
+
+  <form id="styleForm">
+    <div class="full">
+      <label for="occasion">Occasion</label>
+      <input id="occasion" required placeholder="e.g. work dinner, casual weekend, black tie gala">
+    </div>
+    <div class="full">
+      <label for="vibe">Vibe / style (optional)</label>
+      <input id="vibe" placeholder="e.g. minimal, a bit edgy">
+    </div>
+    <div>
+      <label for="budget">Budget for any gap-fill item, GBP (optional)</label>
+      <input id="budget" type="number" min="0" step="1" placeholder="e.g. 60">
+    </div>
+    <div>
+      <label for="season">Season (optional)</label>
+      <select id="season">
+        <option value="">Any</option>
+        <option value="summer">Summer</option>
+        <option value="winter">Winter</option>
+        <option value="all season">All season</option>
+        <option value="transitional">Transitional</option>
+      </select>
+    </div>
+    <button type="submit" id="submitBtn">Style me</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="error"></div>
+  <div id="results"></div>
+
+  <footer>Portfolio demo. Wardrobe photos are illustrative placeholders, not the real items. Gap-fill product links go to Google Shopping, not directly to the retailer.</footer>
+</div>
+
+<script>
+const form = document.getElementById('styleForm');
+const statusEl = document.getElementById('status');
+const errorEl = document.getElementById('error');
+const resultsEl = document.getElementById('results');
+const submitBtn = document.getElementById('submitBtn');
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+
+function renderItemCard(item) {
+  const flag = item.needs_review ? '<div class="review-flag">needs review</div>' : '';
+  return `<div class="item-card">
+    <img src="${esc(item.image)}" alt="${esc(item.display_name)}" loading="lazy">
+    <div class="name">${esc(item.display_name)}</div>
+    ${flag}
+  </div>`;
+}
+
+function renderFill(fill) {
+  if (fill.picked) {
+    const img = fill.image ? `<img src="${esc(fill.image)}" alt="${esc(fill.title)}" loading="lazy">` : '';
+    return `<div class="fill-card">
+      ${img}
+      <div>
+        <div class="fill-title">${esc(fill.title)}</div>
+        <div class="fill-meta">${esc(fill.source)} · ${esc(fill.price)}</div>
+        <div class="fill-meta">${esc(fill.reason || '')}</div>
+        <a href="${esc(fill.link)}" target="_blank" rel="noopener">View on Google Shopping &rarr;</a>
+      </div>
+    </div>`;
+  }
+  return `<div class="not-filled">Gap: "${esc(fill.gap)}" &mdash; not filled (${esc(fill.reason)})</div>`;
+}
+
+function renderOutfit(outfit) {
+  const items = (outfit.items || []).map(renderItemCard).join('');
+  const fills = (outfit.gap_fills || []).map(renderFill).join('');
+  return `<div class="outfit">
+    <h3>Rank ${esc(outfit.rank)}</h3>
+    <p class="reason">${esc(outfit.reason)}</p>
+    <div class="items-row">${items}</div>
+    ${fills ? `<div class="fills">${fills}</div>` : ''}
+  </div>`;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const occasion = document.getElementById('occasion').value.trim();
+  if (!occasion) return;
+
+  const body = {
+    occasion,
+    vibe: document.getElementById('vibe').value.trim(),
+    budget: document.getElementById('budget').value || null,
+    season: document.getElementById('season').value || null,
+  };
+
+  submitBtn.disabled = true;
+  errorEl.style.display = 'none';
+  resultsEl.innerHTML = '';
+  statusEl.textContent = 'Styling in progress, usually a few seconds...';
+
+  try {
+    const resp = await fetch('/api/style', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data.error || `request failed (${resp.status})`);
+
+    statusEl.textContent = '';
+    let html = '';
+    if (data.structural_gaps && data.structural_gaps.length) {
+      html += `<div class="gaps-box"><strong>Structural gaps detected:</strong> ${data.structural_gaps.map(esc).join('; ')}</div>`;
+    }
+    if (!data.outfits || !data.outfits.length) {
+      html += `<p>No wardrobe items passed filtering for this request, nothing to show.</p>`;
+    } else {
+      html += data.outfits.map(renderOutfit).join('');
+    }
+    html += `<div class="cost-strip">
+      This request: <strong>$${esc(data.total_cost_usd)}</strong> in AI + search calls
+      (ranking $${esc(data.ranking_cost_usd)}, gap-fill $${esc(data.gap_fill_cost_usd)}),
+      ${esc(data.live_searches_used)} live product search(es) used.
+    </div>`;
+    resultsEl.innerHTML = html;
+  } catch (err) {
+    statusEl.textContent = '';
+    errorEl.textContent = err.message || 'Something went wrong.';
+    errorEl.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

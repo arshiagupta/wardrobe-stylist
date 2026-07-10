@@ -1,0 +1,9 @@
+{
+  "gender": "womenswear",
+  "blocked_categories": [],
+  "blocked_article_types": ["crop top"],
+  "blocked_colours": [],
+  "blocked_patterns": [],
+  "blocked_style_tags": [],
+  "exclude_needs_review": false
+}
