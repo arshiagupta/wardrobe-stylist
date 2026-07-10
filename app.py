@@ -8,17 +8,18 @@ and constraint_engine.py (hard filtering). No new business logic lives
 here, this file only translates HTTP into the existing Python
 functions and back.
 
-Static files (the page itself, wardrobe photos) are served by Vercel's
-CDN from the public/ directory in production, not by Flask (Vercel's
-own guidance: do not use Flask's static_folder in production). In
-production those requests never reach this Flask app at all, so
-static_folder being set here is inert there, it only matters for the
-local-dev-only "/" route below, gated on the VERCEL env var Vercel
-sets automatically so it never registers in production.
+Static files: Vercel's own Flask guide says static assets belong in
+public/** and warns against using Flask's static_folder in production.
+In practice (found by deploying, session 6), Vercel still routes every
+path without an exact static-file match to this Flask function,
+including "/" itself, rather than falling back to public/index.html
+automatically. So static_folder is configured here and used for real
+in both environments, not just local dev; the explicit "/" route below
+serves index.html itself since nothing does that for us automatically.
 
 `app` must be a genuine top-level assignment, not defined inside an
 if/else: Vercel's Flask detector does a static scan for exactly that
-and fails the build otherwise (found the hard way, session 6).
+and fails the build otherwise (also found by deploying, session 6).
 """
 import os
 import traceback
@@ -29,10 +30,10 @@ import gap_fill
 
 app = Flask(__name__, static_folder="public", static_url_path="")
 
-if not os.environ.get("VERCEL"):
-    @app.route("/")
-    def _local_index():
-        return app.send_static_file("index.html")
+
+@app.route("/")
+def index():
+    return app.send_static_file("index.html")
 
 
 @app.route("/api/style", methods=["POST"])
