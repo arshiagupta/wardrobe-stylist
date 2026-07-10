@@ -1,7 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/api/index" }
+  ],
   "functions": {
-    "app.py": {
+    "api/index.py": {
       "maxDuration": 60,
       "excludeFiles": "{test_*.py,__pycache__/**,wardrobe/photos/**,wardrobe/shopping_cache.json}"
     }
