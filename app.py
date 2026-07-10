@@ -10,11 +10,15 @@ functions and back.
 
 Static files (the page itself, wardrobe photos) are served by Vercel's
 CDN from the public/ directory in production, not by Flask (Vercel's
-own guidance: do not use Flask's static_folder in production). The
-local-dev-only branch below serves that same folder through Flask
-purely so this can be tested with `python app.py` before deploying, it
-is gated on the VERCEL env var Vercel sets automatically so it never
-runs in production.
+own guidance: do not use Flask's static_folder in production). In
+production those requests never reach this Flask app at all, so
+static_folder being set here is inert there, it only matters for the
+local-dev-only "/" route below, gated on the VERCEL env var Vercel
+sets automatically so it never registers in production.
+
+`app` must be a genuine top-level assignment, not defined inside an
+if/else: Vercel's Flask detector does a static scan for exactly that
+and fails the build otherwise (found the hard way, session 6).
 """
 import os
 import traceback
@@ -23,11 +27,9 @@ from flask import Flask, request, jsonify
 
 import gap_fill
 
-if os.environ.get("VERCEL"):
-    app = Flask(__name__)
-else:
-    app = Flask(__name__, static_folder="public", static_url_path="")
+app = Flask(__name__, static_folder="public", static_url_path="")
 
+if not os.environ.get("VERCEL"):
     @app.route("/")
     def _local_index():
         return app.send_static_file("index.html")
