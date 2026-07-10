@@ -9,30 +9,28 @@ here, this file only translates HTTP into the existing Python
 functions and back.
 
 Lives at api/index.py, not the project root: Vercel's own official
-Flask example uses this exact structure plus an explicit vercel.json
-rewrite ({"source": "/(.*)", "destination": "/api/index"}). A
-root-level app.py built and imported correctly, and POST /api/style
-worked, but GET requests (including "/") all 404'd in production
-despite working locally and despite the route being registered.
-Matching the proven official structure exactly, rather than guessing
-at what a root-level entrypoint's internal route name should be,
-fixed it (session 6).
-
-Static files: Vercel's own Flask guide says static assets belong in
-public/** and warns against using Flask's static_folder in production.
-In practice, with the rewrite above forwarding every path here, this
-Flask app serves "/" and everything else itself; static_folder is
-configured and used for real in both environments, not just local dev.
-
-`app` must be a genuine top-level assignment, not defined inside an
-if/else: Vercel's Flask detector does a static scan for exactly that
-and fails the build otherwise (found by deploying, session 6).
+Flask example uses this exact structure. `app` must be a genuine
+top-level assignment, not defined inside an if/else: Vercel's Flask
+detector does a static scan for exactly that and fails the build
+otherwise (found by deploying, session 6).
 
 Since this file lives in api/, not the project root, its sibling
 modules (gap_fill, recommender, constraint_engine, shopping_search)
 are not automatically importable, Vercel does not add the project
 root to sys.path for you. Added explicitly below, a documented
 workaround for this exact situation.
+
+Static files (public/index.html, public/photos/*.svg) are NOT served
+by this Flask app in production and never should be: confirmed by
+directly logging the deployed function's own filesystem (session 6)
+that Vercel does not bundle public/ into the function at all, it is a
+reserved, CDN-only directory regardless of the general "Python
+functions include everything" default. vercel.json's rewrite is
+scoped to "/api/(.*)" only, so "/" and "/photos/*" fall through to
+Vercel's native static hosting instead of reaching this function. The
+route and static_folder config below exist purely so `python
+api/index.py` still serves the full page for local testing; in
+production they are simply never reached, which is fine.
 """
 import os
 import sys
@@ -45,31 +43,12 @@ from flask import Flask, request, jsonify
 
 import gap_fill
 
-# Explicit absolute path, not "public": Flask resolves a relative static_folder
-# against app.root_path, which it infers from where Flask(__name__) is called.
-# That does not reliably match the actual project root once Vercel packages
-# and runs this function, so it silently 404'd on every static file (found by
-# deploying, session 6). An absolute path sidesteps root_path guessing entirely.
 app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, "public"), static_url_path="")
 
 
 @app.route("/", methods=["GET"])
 def index():
-    # Temporary diagnostic (session 6): GET / 404s in production despite
-    # working locally with identical code. Print what the deployed
-    # filesystem actually looks like instead of continuing to guess.
-    index_path = os.path.join(app.static_folder, "index.html")
-    print(f"DEBUG index(): __file__={os.path.abspath(__file__)!r}")
-    print(f"DEBUG index(): PROJECT_ROOT={PROJECT_ROOT!r} exists={os.path.exists(PROJECT_ROOT)}")
-    print(f"DEBUG index(): PROJECT_ROOT listing="
-          f"{os.listdir(PROJECT_ROOT) if os.path.exists(PROJECT_ROOT) else 'MISSING'}")
-    print(f"DEBUG index(): static_folder={app.static_folder!r} exists={os.path.exists(app.static_folder)}")
-    print(f"DEBUG index(): index_path={index_path!r} exists={os.path.exists(index_path)}")
-    try:
-        return app.send_static_file("index.html")
-    except Exception as e:  # noqa: BLE001 - diagnostic only, re-raised below
-        print(f"DEBUG index(): send_static_file raised {type(e).__name__}: {e}")
-        raise
+    return app.send_static_file("index.html")
 
 
 @app.route("/api/style", methods=["POST"])
