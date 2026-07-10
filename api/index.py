@@ -55,7 +55,21 @@ app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, "public"), static
 
 @app.route("/", methods=["GET"])
 def index():
-    return app.send_static_file("index.html")
+    # Temporary diagnostic (session 6): GET / 404s in production despite
+    # working locally with identical code. Print what the deployed
+    # filesystem actually looks like instead of continuing to guess.
+    index_path = os.path.join(app.static_folder, "index.html")
+    print(f"DEBUG index(): __file__={os.path.abspath(__file__)!r}")
+    print(f"DEBUG index(): PROJECT_ROOT={PROJECT_ROOT!r} exists={os.path.exists(PROJECT_ROOT)}")
+    print(f"DEBUG index(): PROJECT_ROOT listing="
+          f"{os.listdir(PROJECT_ROOT) if os.path.exists(PROJECT_ROOT) else 'MISSING'}")
+    print(f"DEBUG index(): static_folder={app.static_folder!r} exists={os.path.exists(app.static_folder)}")
+    print(f"DEBUG index(): index_path={index_path!r} exists={os.path.exists(index_path)}")
+    try:
+        return app.send_static_file("index.html")
+    except Exception as e:  # noqa: BLE001 - diagnostic only, re-raised below
+        print(f"DEBUG index(): send_static_file raised {type(e).__name__}: {e}")
+        raise
 
 
 @app.route("/api/style", methods=["POST"])
