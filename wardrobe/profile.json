@@ -1,7 +1,7 @@
 {
-  "gender": "womenswear",
+  "gender": null,
   "blocked_categories": [],
-  "blocked_article_types": ["crop top"],
+  "blocked_article_types": [],
   "blocked_colours": [],
   "blocked_patterns": [],
   "blocked_style_tags": [],

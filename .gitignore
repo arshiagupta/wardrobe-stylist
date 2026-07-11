@@ -7,6 +7,19 @@
 # placeholders in public/photos/ instead (see generate_placeholders.py).
 wardrobe/photos/
 
+# real wardrobe.json: the builder's own extracted clothing inventory. Removed
+# from the public repo in session 7 (7A) once the app went multi-user: the
+# deployed app now reads each visitor's own wardrobe from their browser, so it
+# never needs, and must not expose, the builder's personal wardrobe. The file
+# stays on the builder's local disk for the local CLI tools and tests.
+wardrobe/wardrobe.json
+
+# obsolete placeholder SVGs generated from the builder's wardrobe (they encode
+# her item names/colours). Removed from the public repo in session 7 (7A) once
+# the app went multi-user and renders each visitor's own photos from their own
+# browser. Regenerable locally via generate_placeholders.py if ever needed.
+webapp/photos/
+
 # regenerable, not meaningful to version
 wardrobe/shopping_cache.json
 __pycache__/

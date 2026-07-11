@@ -211,14 +211,23 @@ def call_model(client, types_mod, prompt):
     raise RuntimeError(f"ranking call failed after {MAX_RETRIES} attempts: {last_err}")
 
 
-def get_outfits(occasion, vibe, budget, season):
+def get_outfits(occasion, vibe, budget, season, wardrobe=None, profile=None):
     """Does the full Phase 3 pipeline and returns everything both main()
     (terminal printing) and gap_fill.py (Phase 4) need. Makes at most one
-    AI call. Returns a dict; see the keys set below."""
+    AI call. Returns a dict; see the keys set below.
+
+    wardrobe/profile: pass them in directly (the multi-user web path, 7A: the
+    visitor's own wardrobe from their browser). If left None, they are loaded
+    from the server files on disk, which is how the local CLI and the tests
+    still call this. That fallback is deliberately NOT used by the web API,
+    which always passes the caller's wardrobe so no single user's closet is
+    ever served to everyone."""
     formality = map_occasion_to_formality(occasion)
 
-    wardrobe = load_wardrobe()
-    profile = load_profile()
+    if wardrobe is None:
+        wardrobe = load_wardrobe()
+    if profile is None:
+        profile = load_profile()
     request = {}
     if formality:
         request["formality"] = formality

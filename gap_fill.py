@@ -181,8 +181,8 @@ def pick_product_for_gap(client, types_mod, gap_text, other_item_names, vibe, bu
     return pick, cost, in_tok, out_tok
 
 
-def fill_gaps_for_request(occasion, vibe, budget, season):
-    outcome = recommender.get_outfits(occasion, vibe, budget, season)
+def fill_gaps_for_request(occasion, vibe, budget, season, wardrobe=None, profile=None):
+    outcome = recommender.get_outfits(occasion, vibe, budget, season, wardrobe=wardrobe, profile=profile)
     outcome["gap_fill_total_cost"] = 0.0
     outcome["live_searches_used"] = 0
 

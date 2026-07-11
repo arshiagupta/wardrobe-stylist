@@ -25,6 +25,7 @@ AI wardrobe stylist, a portfolio artifact for an AI strategy consultant role. Th
 At the end of every session, or whenever the builder says they are switching sessions, update context-full.md and next-session.md in this folder. Full history, never summarise away past decisions. Append new decisions to the decision log with reasons.
 
 ## Environment facts
-- Windows laptop, PowerShell, Python 3.14.6, command set pinned: python and pip work directly.
-- Gemini API key has billing attached (Tier 1) as of session 4. Model availability must be checked by listing models against the key, not assumed from documentation: gemini-2.5-flash 404s for this account (retired for new accounts), gemini-3.5-flash returned repeated 503s on 2026-07-09.
-- extract_wardrobe.py is currently set to gemini-3.1-flash-lite, untested. 8-9 clothing photos sit in wardrobe/photos, zero items extracted so far, nothing billed yet.
+- Windows laptop, PowerShell, Python 3.14.6, command set pinned: python and pip work directly. Git for Windows and Flask also installed (session 6).
+- Gemini API key has billing attached (Tier 1) as of session 4. Model pinned to gemini-3.1-flash-lite (verified live, session 5), used across all AI-calling phases with zero failures so far.
+- GitHub and Vercel accounts created session 6. App is live: https://wardrobe-stylist-nine.vercel.app, auto-deploys on push to the GitHub repo's main branch.
+- As of end of session 6: Phases 1-5 of 6 are complete (extraction, constraint engine, recommender, live shopping, web deploy). Phase 6 (README) is next. Full detail always in context-full.md and next-session.md, this file is standing instructions only, not the log.

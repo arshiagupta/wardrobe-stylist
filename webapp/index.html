@@ -17,12 +17,16 @@
   }
   .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
   header h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  header p { color: var(--muted); margin: 0 0 28px; font-size: 0.95rem; }
+  header p { color: var(--muted); margin: 0 0 24px; font-size: 0.95rem; }
 
-  form {
+  .card {
     background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 20px; display: grid; gap: 14px; grid-template-columns: 1fr 1fr;
+    padding: 20px; margin-bottom: 18px;
   }
+  .card h2 { font-size: 1.05rem; margin: 0 0 4px; }
+  .card .hint { color: var(--muted); font-size: 0.85rem; margin: 0 0 14px; }
+
+  form { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
   form .full { grid-column: 1 / -1; }
   label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
   input, select {
@@ -30,11 +34,38 @@
     font-size: 0.95rem; background: #fff; color: var(--ink);
   }
   button {
-    grid-column: 1 / -1; padding: 11px; border: none; border-radius: 8px;
+    padding: 11px; border: none; border-radius: 8px;
     background: var(--accent); color: var(--accent-ink); font-size: 1rem;
     cursor: pointer; font-weight: 600;
   }
-  button:disabled { opacity: 0.6; cursor: default; }
+  button.full { grid-column: 1 / -1; width: 100%; }
+  button:disabled { opacity: 0.5; cursor: default; }
+
+  /* upload */
+  .upload-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .upload-btn {
+    display: inline-block; padding: 10px 16px; border-radius: 8px;
+    background: var(--accent); color: var(--accent-ink); font-weight: 600;
+    font-size: 0.95rem; cursor: pointer;
+  }
+  .upload-btn.disabled { opacity: 0.5; cursor: default; }
+  #photoInput { display: none; }
+  .upload-count { font-size: 0.85rem; color: var(--muted); }
+  .clear-link { font-size: 0.82rem; color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+  #uploadStatus { margin: 12px 0 0; font-size: 0.85rem; color: var(--muted); min-height: 1.1em; }
+  #uploadStatus.err { color: #a12b2b; }
+
+  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+  .thumb { width: 74px; text-align: center; position: relative; }
+  .thumb img { width: 74px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+  .thumb .tname { font-size: 0.66rem; color: var(--muted); margin-top: 3px; line-height: 1.2;
+                  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+                  -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .thumb .rm { position: absolute; top: -6px; right: -6px; background: #fff; border: 1px solid var(--line);
+               border-radius: 50%; width: 18px; height: 18px; line-height: 15px; font-size: 12px;
+               color: var(--muted); cursor: pointer; text-align: center; }
+  .thumb .review-dot { color: var(--warn); font-size: 0.62rem; }
 
   #status { margin: 16px 0; color: var(--muted); font-size: 0.9rem; }
   #error { margin: 16px 0; color: #a12b2b; font-size: 0.9rem; display: none; }
@@ -54,6 +85,9 @@
   .items-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
   .item-card { width: 110px; text-align: center; }
   .item-card img { width: 110px; height: 146px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+  .item-card .ph { width: 110px; height: 146px; border-radius: 8px; border: 1px dashed var(--line);
+                   display: flex; align-items: center; justify-content: center; color: var(--muted);
+                   font-size: 0.7rem; padding: 6px; background: #f6f4f0; }
   .item-card .name { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
   .item-card .review-flag { font-size: 0.68rem; color: var(--warn); }
 
@@ -80,48 +114,102 @@
 <div class="wrap">
   <header>
     <h1>AI wardrobe stylist</h1>
-    <p>Looks at a real wardrobe first, suggests outfits from what's already owned, and finds a real purchasable product for anything genuinely missing.</p>
+    <p>Add photos of your own clothes. It suggests outfits from what you already own, and finds a real product for anything genuinely missing.</p>
   </header>
 
-  <form id="styleForm">
-    <div class="full">
-      <label for="occasion">Occasion</label>
-      <input id="occasion" required placeholder="e.g. work dinner, casual weekend, black tie gala">
+  <!-- 1. wardrobe upload -->
+  <div class="card">
+    <h2>Your wardrobe</h2>
+    <p class="hint">Photos are analysed once and kept only in this browser, on this device. They are never stored on our server. One clear garment per photo works best.</p>
+    <div class="upload-row">
+      <label class="upload-btn" id="uploadBtn" for="photoInput">Add clothing photos</label>
+      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" multiple>
+      <span class="upload-count" id="uploadCount">0 items</span>
+      <span class="clear-link" id="clearLink" style="display:none">clear wardrobe</span>
     </div>
-    <div class="full">
-      <label for="vibe">Vibe / style (optional)</label>
-      <input id="vibe" placeholder="e.g. minimal, a bit edgy">
-    </div>
-    <div>
-      <label for="budget">Budget for any gap-fill item, GBP (optional)</label>
-      <input id="budget" type="number" min="0" step="1" placeholder="e.g. 60">
-    </div>
-    <div>
-      <label for="season">Season (optional)</label>
-      <select id="season">
-        <option value="">Any</option>
-        <option value="summer">Summer</option>
-        <option value="winter">Winter</option>
-        <option value="all season">All season</option>
-        <option value="transitional">Transitional</option>
-      </select>
-    </div>
-    <button type="submit" id="submitBtn">Style me</button>
-  </form>
+    <div id="uploadStatus"></div>
+    <div class="thumbs" id="thumbs"></div>
+  </div>
+
+  <!-- 2. styling request -->
+  <div class="card">
+    <h2>Style me</h2>
+    <p class="hint">Tell the stylist the occasion. Vibe, budget and season are optional.</p>
+    <form id="styleForm">
+      <div class="full">
+        <label for="occasion">Occasion</label>
+        <input id="occasion" required placeholder="e.g. work dinner, casual weekend, black tie gala">
+      </div>
+      <div class="full">
+        <label for="vibe">Vibe / style (optional)</label>
+        <input id="vibe" placeholder="e.g. minimal, a bit edgy">
+      </div>
+      <div>
+        <label for="budget">Budget for any gap-fill item, GBP (optional)</label>
+        <input id="budget" type="number" min="0" step="1" placeholder="e.g. 60">
+      </div>
+      <div>
+        <label for="season">Season (optional)</label>
+        <select id="season">
+          <option value="">Any</option>
+          <option value="summer">Summer</option>
+          <option value="winter">Winter</option>
+          <option value="all season">All season</option>
+          <option value="transitional">Transitional</option>
+        </select>
+      </div>
+      <button type="submit" class="full" id="submitBtn">Style me</button>
+    </form>
+  </div>
 
   <div id="status"></div>
   <div id="error"></div>
   <div id="results"></div>
 
-  <footer>Portfolio demo. Wardrobe photos are illustrative placeholders, not the real items. Gap-fill product links go to Google Shopping, not directly to the retailer.</footer>
+  <footer>Portfolio demo. Your wardrobe stays in your own browser, never on the server. Gap-fill product links go to Google Shopping, not directly to the retailer.</footer>
 </div>
 
 <script>
+const STORAGE_KEY = 'ws_wardrobe_v1';
+const MAX_ITEMS = 20;          // per-device cap, also enforced honestly in the README as bypassable
+const UPLOAD_MAX_DIM = 1024;   // downscale before upload: plenty for attribute extraction, small payload
+const THUMB_MAX_DIM = 256;     // tiny thumbnail kept in localStorage for display
+
 const form = document.getElementById('styleForm');
 const statusEl = document.getElementById('status');
 const errorEl = document.getElementById('error');
 const resultsEl = document.getElementById('results');
 const submitBtn = document.getElementById('submitBtn');
+const photoInput = document.getElementById('photoInput');
+const uploadBtn = document.getElementById('uploadBtn');
+const uploadCount = document.getElementById('uploadCount');
+const uploadStatus = document.getElementById('uploadStatus');
+const thumbsEl = document.getElementById('thumbs');
+const clearLink = document.getElementById('clearLink');
+
+// wardrobe state: items = the JSON sent to /api/style, thumbs = id -> small dataURL for display
+let wardrobe = { items: [], thumbs: {} };
+let extractionCostTotal = 0;
+
+function loadWardrobe() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.items)) {
+        wardrobe = { items: parsed.items, thumbs: parsed.thumbs || {} };
+      }
+    }
+  } catch (e) { /* corrupt storage, start clean */ }
+}
+
+function saveWardrobe() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobe));
+  } catch (e) {
+    setUploadStatus('Wardrobe is too large to save in this browser. Older items may not persist.', true);
+  }
+}
 
 function esc(s) {
   const d = document.createElement('div');
@@ -129,10 +217,154 @@ function esc(s) {
   return d.innerHTML;
 }
 
+function setUploadStatus(msg, isErr) {
+  uploadStatus.textContent = msg || '';
+  uploadStatus.className = isErr ? 'err' : '';
+}
+
+function renderWardrobe() {
+  const n = wardrobe.items.length;
+  uploadCount.textContent = n === 1 ? '1 item' : `${n} items`;
+  clearLink.style.display = n ? 'inline' : 'none';
+  const capped = n >= MAX_ITEMS;
+  uploadBtn.classList.toggle('disabled', capped);
+  photoInput.disabled = capped;
+
+  thumbsEl.innerHTML = wardrobe.items.map((it) => {
+    const src = wardrobe.thumbs[it.id];
+    const img = src
+      ? `<img src="${esc(src)}" alt="${esc(it.display_name)}">`
+      : `<div class="thumb-ph"></div>`;
+    const review = it.needs_review ? `<div class="review-dot">needs review</div>` : '';
+    return `<div class="thumb" data-id="${esc(it.id)}">
+      <span class="rm" data-id="${esc(it.id)}" title="remove">&times;</span>
+      ${img}
+      <div class="tname">${esc(it.display_name)}</div>
+      ${review}
+    </div>`;
+  }).join('');
+
+  thumbsEl.querySelectorAll('.rm').forEach((el) => {
+    el.addEventListener('click', () => removeItem(el.getAttribute('data-id')));
+  });
+}
+
+function removeItem(id) {
+  wardrobe.items = wardrobe.items.filter((it) => it.id !== id);
+  delete wardrobe.thumbs[id];
+  saveWardrobe();
+  renderWardrobe();
+}
+
+// ---- image downscaling in the browser ----
+function fileToImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('could not read this image. HEIC photos are not supported yet, please use JPEG or PNG'));
+    };
+    img.src = url;
+  });
+}
+
+function scaleToCanvas(img, maxDim) {
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+  return canvas;
+}
+
+function canvasToBlob(canvas, quality) {
+  return new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
+}
+
+async function processFile(file, indexLabel) {
+  setUploadStatus(`Analysing ${indexLabel}...`);
+  const img = await fileToImage(file);
+  const uploadBlob = await canvasToBlob(scaleToCanvas(img, UPLOAD_MAX_DIM), 0.85);
+  const thumbUrl = scaleToCanvas(img, THUMB_MAX_DIM).toDataURL('image/jpeg', 0.7);
+
+  const fd = new FormData();
+  fd.append('photo', uploadBlob, 'photo.jpg');
+  const resp = await fetch('/api/extract', { method: 'POST', body: fd });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(data.error || `extraction failed (${resp.status})`);
+
+  const item = data.item;
+  if (wardrobe.items.some((it) => it.id === item.id)) {
+    return { skipped: true, name: item.display_name };
+  }
+  wardrobe.items.push(item);
+  wardrobe.thumbs[item.id] = thumbUrl;
+  extractionCostTotal += (data.cost_usd || 0);
+  saveWardrobe();
+  renderWardrobe();
+  return { skipped: false, name: item.display_name };
+}
+
+photoInput.addEventListener('change', async () => {
+  const files = Array.from(photoInput.files || []);
+  photoInput.value = '';  // allow re-selecting the same file later
+  if (!files.length) return;
+
+  const room = MAX_ITEMS - wardrobe.items.length;
+  if (room <= 0) {
+    setUploadStatus(`Wardrobe is full (${MAX_ITEMS} items). Remove some to add more.`, true);
+    return;
+  }
+  const batch = files.slice(0, room);
+  const overflow = files.length - batch.length;
+
+  uploadBtn.classList.add('disabled');
+  photoInput.disabled = true;
+  let added = 0, skipped = 0, failed = 0;
+
+  for (let i = 0; i < batch.length; i++) {
+    try {
+      const r = await processFile(batch[i], `photo ${i + 1} of ${batch.length}`);
+      if (r.skipped) skipped++; else added++;
+    } catch (e) {
+      failed++;
+      setUploadStatus(e.message || 'a photo could not be processed', true);
+    }
+  }
+
+  const parts = [];
+  if (added) parts.push(`${added} added`);
+  if (skipped) parts.push(`${skipped} already in wardrobe`);
+  if (failed) parts.push(`${failed} failed`);
+  if (overflow) parts.push(`${overflow} skipped (${MAX_ITEMS}-item cap)`);
+  const costNote = extractionCostTotal ? ` Extraction cost so far: $${extractionCostTotal.toFixed(5)}.` : '';
+  setUploadStatus((parts.join(', ') || 'nothing added') + '.' + costNote, failed > 0 && added === 0);
+
+  renderWardrobe();
+});
+
+clearLink.addEventListener('click', () => {
+  if (!wardrobe.items.length) return;
+  if (!confirm('Remove all items from this wardrobe? This only clears this browser.')) return;
+  wardrobe = { items: [], thumbs: {} };
+  extractionCostTotal = 0;
+  saveWardrobe();
+  renderWardrobe();
+  setUploadStatus('');
+});
+
+// ---- results rendering ----
 function renderItemCard(item) {
+  const src = wardrobe.thumbs[item.id];
+  const img = src
+    ? `<img src="${esc(src)}" alt="${esc(item.display_name)}" loading="lazy">`
+    : `<div class="ph">${esc(item.display_name)}</div>`;
   const flag = item.needs_review ? '<div class="review-flag">needs review</div>' : '';
   return `<div class="item-card">
-    <img src="${esc(item.image)}" alt="${esc(item.display_name)}" loading="lazy">
+    ${img}
     <div class="name">${esc(item.display_name)}</div>
     ${flag}
   </div>`;
@@ -145,7 +377,7 @@ function renderFill(fill) {
       ${img}
       <div>
         <div class="fill-title">${esc(fill.title)}</div>
-        <div class="fill-meta">${esc(fill.source)} · ${esc(fill.price)}</div>
+        <div class="fill-meta">${esc(fill.source)} &middot; ${esc(fill.price)}</div>
         <div class="fill-meta">${esc(fill.reason || '')}</div>
         <a href="${esc(fill.link)}" target="_blank" rel="noopener">View on Google Shopping &rarr;</a>
       </div>
@@ -170,11 +402,18 @@ form.addEventListener('submit', async (e) => {
   const occasion = document.getElementById('occasion').value.trim();
   if (!occasion) return;
 
+  if (!wardrobe.items.length) {
+    errorEl.textContent = 'Add at least one clothing photo above before styling.';
+    errorEl.style.display = 'block';
+    return;
+  }
+
   const body = {
     occasion,
     vibe: document.getElementById('vibe').value.trim(),
     budget: document.getElementById('budget').value || null,
     season: document.getElementById('season').value || null,
+    wardrobe: wardrobe.items,
   };
 
   submitBtn.disabled = true;
@@ -197,7 +436,7 @@ form.addEventListener('submit', async (e) => {
       html += `<div class="gaps-box"><strong>Structural gaps detected:</strong> ${data.structural_gaps.map(esc).join('; ')}</div>`;
     }
     if (!data.outfits || !data.outfits.length) {
-      html += `<p>No wardrobe items passed filtering for this request, nothing to show.</p>`;
+      html += `<p>No wardrobe items passed filtering for this request, nothing to show. Try a different occasion, or add more clothes.</p>`;
     } else {
       html += data.outfits.map(renderOutfit).join('');
     }
@@ -215,6 +454,10 @@ form.addEventListener('submit', async (e) => {
     submitBtn.disabled = false;
   }
 });
+
+// init
+loadWardrobe();
+renderWardrobe();
 </script>
 </body>
 </html>

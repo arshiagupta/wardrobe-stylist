@@ -93,6 +93,10 @@ def sha256_file(path):
     return h.hexdigest()
 
 
+def sha256_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
 def load_cache():
     if os.path.exists(CACHE_PATH):
         with open(CACHE_PATH, "r", encoding="utf-8") as f:
@@ -192,6 +196,56 @@ def call_vision(client, types_mod, img_bytes, mime):
             print(f"    attempt {attempt} failed ({e}), retrying in {wait}s")
             time.sleep(wait)
     raise RuntimeError(f"vision call failed after {MAX_RETRIES} attempts: {last_err}")
+
+
+def get_genai_client(api_key=None):
+    """Build a Gemini client + the types module. Raises RuntimeError with a
+    clear message if the SDK or key is missing, so the web API can turn it into
+    a proper HTTP error instead of a hard crash (main() uses sys.exit instead,
+    that path is a terminal script and unchanged)."""
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        raise RuntimeError("Missing dependency: pip install google-genai")
+    key = api_key or os.environ.get("GEMINI_API_KEY")
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY is not set")
+    return genai.Client(api_key=key), types
+
+
+def extract_item_from_bytes(img_bytes, mime, filename="upload", client=None, types_mod=None):
+    """Vision-extract ONE image that is already in memory (no disk read, no
+    disk write), validate it against the shared schema, and return
+    (item, cost_usd, in_tok, out_tok).
+
+    This is the multi-user web path (7A): a visitor's uploaded photo is
+    extracted and the resulting JSON is handed straight back to their browser,
+    never cached to wardrobe.json on the server. The local folder pipeline in
+    main() is deliberately left untouched and still writes to wardrobe.json for
+    the builder's own bulk work."""
+    if client is None or types_mod is None:
+        client, types_mod = get_genai_client()
+
+    file_hash = sha256_bytes(img_bytes)
+    resp = call_vision(client, types_mod, img_bytes, mime)
+
+    text = (resp.text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`").removeprefix("json").strip()
+    raw = json.loads(text)
+
+    usage = getattr(resp, "usage_metadata", None)
+    in_tok = getattr(usage, "prompt_token_count", 0) or 0
+    out_tok = getattr(usage, "candidates_token_count", 0) or 0
+    cost = (in_tok / 1e6) * PRICE_PER_M_INPUT + (out_tok / 1e6) * PRICE_PER_M_OUTPUT
+
+    item = validate(raw, filename, file_hash)
+    item["extraction_meta"] = {
+        "model": MODEL, "input_tokens": in_tok, "output_tokens": out_tok,
+        "est_cost_usd": round(cost, 6),
+    }
+    return item, cost, in_tok, out_tok
 
 
 def main():

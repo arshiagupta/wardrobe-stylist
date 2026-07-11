@@ -1,41 +1,65 @@
 # next-session.md - state handoff
-As of: end of session 6, run inside Claude Code (desktop app, Code tab).
+As of: end of session 7 (strategy pivot session). Read this AFTER CLAUDE.md and context-full.md.
+
+## The pivot in one paragraph
+A strategy session on 2026-07-11 (captured in session-brief-v1.1.md) changed the plan. Phase 6 (README) is NO LONGER next. The core finding: the live app is a single-user app wearing a multi-user costume, it serves the builder's own wardrobe to every visitor. Confirmed when the builder's husband opened the live site and got styled from HER clothes. The fix (let visitors upload their own wardrobe, stored in their own browser) is now the top priority because it turns the demo from "look at her closet" into "try it with yours" and solves the photo-privacy problem by design. A revised phase plan 7A to 7E replaces "Phase 6 next". The README becomes 7E: last, but non-negotiable.
 
 ## Where the project stands
-Phases 1 through 4 are all complete. Full detail and reasoning in context-full.md section 5, session 6 tables (there are two: Phase 3 build, then Phase 4 build further down). Nothing is blocked right now. Combined measured project spend across every phase to date: roughly $0.0101 total (about one cent), against a $10 projection and $40 hard cap.
+Phases 1 through 5 are complete and unchanged. The app is live: **https://wardrobe-stylist-nine.vercel.app**. Combined measured spend to date: roughly $0.0101 total (about one cent), against a $10 projection and $40 hard cap. Vercel, Serper and GitHub all free tier.
 
-- Phase 1: wardrobe vision extraction. 10 of 13 photos extracted, zero failures, $0.00673 total. 3 photos still unextracted (rerun extract_wardrobe.py anytime, hash-dedupe means no re-billing).
-- Phase 2: profile + constraint engine. wardrobe/profile.json holds standing blockers, constraint_engine.py filters deterministically, zero AI cost, 16/16 tests passing.
-- Phase 3: styling recommender. recommender.py takes --occasion/--vibe/--budget/--season as command-line flags, maps occasion to formality via a hard-coded lookup table (OCCASION_FORMALITY_MAP), filters through constraint_engine, detects structural gaps in code (detect_gaps), then makes one AI call to rank/pair/explain outfits. Outfits carry a "gaps" list (changed from a single "gap" string mid-session so each missing item is its own precise, separately-searchable description). Core logic lives in get_outfits(), reused by both recommender.py's own terminal output and by gap_fill.py. test_recommender.py: 15/15 passing.
-- Phase 4: live shopping. shopping_search.py wraps Serper.dev's Google Shopping endpoint with a deterministic merchant whitelist (zara/h&m/mango) and budget filter, plus a query cache (wardrobe/shopping_cache.json). gap_fill.py turns each outfit's gap descriptions into real searches (folding in "women's" deterministically, a fix for a menswear-leakage bug found this session), then makes one small AI call per gap to pick the best real candidate and infer style attributes, with a hallucination guard (is_valid_position) that never trusts a model-picked item outside the actual filtered candidate list. MAX_SEARCHES_PER_REQUEST=3 (locked session 3) is enforced across a whole styling request; once hit, remaining gaps show "NOT FILLED" with a clear reason, never silently dropped. test_shopping_search.py: 13/13, test_gap_fill.py: 12/12.
-- Real end-to-end Phase 4 run ("work dinner", £60 budget): 3 real products found and merged (H&M cigarette trousers £22.99, Zara heeled mules £35.99, Zara wide-leg trousers £25.99), all whitelisted retailers, all in budget, total AI cost $0.00140 for that whole run (ranking + all 3 picks).
+- Phase 1: wardrobe vision extraction (extract_wardrobe.py). 10 of 13-14 photos extracted, zero failures, $0.00673.
+- Phase 2: profile + constraint engine (constraint_engine.py, profile.json). Deterministic, zero AI cost, 16/16 tests.
+- Phase 3: styling recommender (recommender.py). Occasion mapped to formality via a lookup table, gap detection deterministic, one AI call ranks/explains. 15/15 tests.
+- Phase 4: live shopping (shopping_search.py + gap_fill.py). Serper wrapper, merchant whitelist, budget filter, query cache, AI pick + attribute inference, hallucination guard. 13/13 and 12/12 tests.
+- Phase 5: web UI, deployed. api/index.py (Flask, one route POST /api/style) + webapp/index.html + webapp/photos/*.svg (placeholders, real photos gitignored). GitHub repo github.com/arshiagupta/wardrobe-stylist, auto-deploys on push to main.
 
-## Known scope limitations to carry into the README (Phase 6), do not "fix" quietly, document honestly
-- The shopping "link" field is a Google Shopping product page (google.com/search?ibp=oshop...), not a direct retailer URL. Serper does not provide a direct-merchant-link field or endpoint (confirmed live, including a 404 on a guessed second endpoint). A competing paid provider (SerpApi) does offer this via a documented `direct_link` field, but switching provider was judged too large a pivot for the remaining timebox. This directly qualifies the locked product promise in section 1 ("a clickable link redirecting to the retailer"), it is a real limitation, not a polish gap.
-- MAX_SEARCHES_PER_REQUEST=3 means a heavily-gapped wardrobe can exhaust the live-search budget within the first one or two ranked outfits in a single request. Lower-ranked outfits may show gap text only, no live product. This is the cost/quota guardrail (locked session 3) working as designed, good material for the README's cost-engineering section, not a bug to hide.
-- Google's 'gl' country parameter needs "gb" (ISO 3166-1 alpha-2), not "uk". Passing "uk" does not error, it silently returns US-anchored results. Already fixed in shopping_search.py, logged here so nobody "fixes" it back by accident while reading old code or notes.
+## Revised phase plan v4 (this is the new roadmap)
+| Phase | Content | Depends on | Est effort |
+|---|---|---|---|
+| 7A | Multi-user upload flow: upload button (multiple files, phone camera via the same input), new API route running extraction per photo, per-session photo cap (target 20), wardrobe JSON returned to and stored in browser localStorage, app reads wardrobe from localStorage not a server file | Nothing | ~Half a day, the big one |
+| 7B | User profile: form (gender/style presentation with a neutral option, age, body type or measurements, likes, avoid list), localStorage, avoid-list into the constraint engine, gender into shopping query construction AND ranking prompt, rest into the ranking prompt | 7A helps, not required | ~2-3 hours |
+| 7C | UI revamp: tabs, landing/story section, wardrobe gallery, product-image click-to-expand, saved-outfits tab, search cap to 2 | 7A for the gallery | ~Half a day |
+| 7D | Grouped alternates: same bottom + footwear, multiple tops, one card. Prompt + schema + rendering | 7C rendering | ~2-3 hours |
+| 7E | README, non-negotiable, last but never dropped | Everything | Writing, not debugging |
+
+## 7A is DONE (session 7). Next is 7B.
+7A was built, billed-tested end to end ($0.002319) and shipped. The app is now multi-user: visitors upload their own photos, extraction runs per photo via POST /api/extract, the wardrobe lives in their browser localStorage, and /api/style reads that wardrobe from the request body. Privacy removals done and pushed: wardrobe.json untracked (kept local), profile.json neutralised, placeholder SVGs removed. Full detail in context-full.md's session 7 execution note.
+Still open on 7A: a real photo has not been driven through the browser upload UI end to end (backend proven, page renders). Optional billed in-browser UI test can be done anytime.
 
 ## Exact resume point (for Claude Code, next session)
-1. Read CLAUDE.md, context-full.md and this file fully before acting.
-2. Start Phase 5: thin single page UI, deployed to Vercel. All backend logic already exists and is callable (constraint_engine.filter_wardrobe, recommender.get_outfits, gap_fill.fill_gaps_for_request). This phase is presentation layer only, no new AI call design needed.
-3. Likely shape: a simple form (occasion, vibe, budget, season) that calls a backend function wrapping gap_fill.fill_gaps_for_request and renders the ranked outfits, with real product cards (title, price, merchant, link) for any filled gaps and plain text for any "NOT FILLED" ones, shown honestly rather than hidden.
-4. Stretch only, do not attempt until the core UI works end to end: Web Speech API voice input for the occasion/vibe fields (browser-native, no new backend cost).
-5. Before deploying anywhere, confirm with the builder: Vercel account access, and that GEMINI_API_KEY / SERPER_API_KEY will need to become Vercel environment variables (server-side only, never shipped to the browser bundle). Give exhaustive click-by-click steps for both the Vercel account step and the environment variable step, same standard as every other hands-on step this project has needed.
-6. State the estimated cost before any run that calls Gemini or Serper, same as every phase so far, though Phase 5 itself is not expected to introduce new per-call costs beyond what Phases 3 and 4 already do.
-7. After Phase 5, Phase 6 is README assembly from context-full.md: architecture record, cost analysis (now has 4 phases of real measured data), trade-off log (occasion mapping choice, Serper link limitation, search-cap behaviour), eval results (56 deterministic tests across 4 test files), v2 roadmap.
-8. Update context-full.md and next-session.md before the session ends, same as always.
+1. Read CLAUDE.md, context-full.md, this file and session-brief-v1.1.md fully before acting.
+2. Build 7B next: the user-profile form (gender/style presentation with a neutral option, age, body type or measurements, likes, avoid list), stored in localStorage and sent with each styling request. Wiring, per the session 7 decision log: avoid-list into the deterministic constraint engine (profile is already a parameter to get_outfits now, 7A did that plumbing), gender into shopping query construction AND the ranking prompt, age/body/measurements into the ranking prompt only. Explanations should reference them. Document honestly that body-type influence is AI-inferred, not a hard guarantee.
+3. Any billed test run needs the builder's yes and an estimated cost first.
+4. Update context-full.md and next-session.md before the session ends.
 
-## Standing guardrails (duplicated in CLAUDE.md, which Claude Code auto-reads)
+## 7A technical cautions, resolve before/while building
+- The Vercel function will call Gemini once per uploaded photo. Check Vercel function request body size limits, per-photo upload requests are likely safer than one big batch [Guessing, verify].
+- HEIC from iPhones may need browser-side or server-side conversion. The local extract script accepted HEIC, but the browser upload path is new and untested for it.
+- Add the per-session photo cap (target 20) in code, on top of the existing per-request meters. Keep spend boring.
+- Never print or commit either API key.
+
+## The Vercel deployment saga, read before touching api/index.py or vercel.json
+Full detail in context-full.md's session 6 log. Short version so it is not undone by accident:
+- The Flask entrypoint MUST be `api/index.py` (not project root), with `app = Flask(...)` as a genuine top-level statement, never inside an if/else.
+- Static files (the page, photos) live in `webapp/`, NOT `public/`. Vercel treats `public/` as reserved and silently excludes it from a function's bundle. Any other folder name bundles normally.
+- vercel.json has ONE rewrite: `{"source": "/(.*)", "destination": "/api/index"}`. Every request goes to Flask, which serves the page, the photos and /api/style. Do not split static-serving back out to Vercel without re-reading the saga.
+- GEMINI_API_KEY and SERPER_API_KEY are Vercel environment variables, never committed.
+
+## Known scope limitations to carry into the README (7E), document honestly, do not "fix" quietly
+- The shopping "link" is a Google Shopping page, not a direct retailer URL. Serper does not provide a direct-merchant link on the free route.
+- MAX_SEARCHES_PER_REQUEST (dropping to 2 in 7C) means a heavily-gapped wardrobe can exhaust the live-search budget in the first ranked outfit. Cost-engineering material, not a bug.
+- Body type / age / measurements influence is AI-inferred (soft, in the prompt), not a deterministic guarantee like the budget or avoid-list filters. State this plainly.
+- Saved outfits are localStorage only: per-device, vanish if browser data is cleared. Accounts + database are v2.
+- The single-user-costume defect and the husband second-user test: log it as a real defect found in genuine second-user use.
+- OCCASION_FORMALITY_MAP covers a handful of phrases only, expand as demo occasions come up.
+
+## Standing guardrails (duplicated in CLAUDE.md)
 - Never print or write either API key anywhere. Ask before every run that costs money, stating estimated cost.
-- Budget $40 hard cap, measured spend to date roughly $0.0101 total. Bias toward shipping given the timebox.
+- Budget $40 hard cap, measured spend to date roughly $0.0101. Bias toward shipping given the overrun timebox (~2 more build days accepted, session 7).
 - Explain everything non-technically, one concept at a time. Confirm before high-stakes steps.
-- Timebox: roughly 1.5 days of build time remained as of session 4. Sessions 4-6 combined have consumed real time on the deprecation saga plus Phases 1-4. Phase 5 (UI + deploy) is likely the largest remaining time risk: new tooling (Vercel) the builder has not touched before, needs exhaustive click-by-click steps throughout.
-- Do not re-litigate locked decisions, point at context-full.md section 5 first.
+- Do not re-litigate locked decisions, point at context-full.md section 5 first (now including the session 7 block).
 
 ## Starting the next session
-Open Claude Code, same local session on Documents\wardrobe-stylist (files are already on disk, nothing needs to be re-uploaded). First message to send:
+Open Claude Code, same local session on Documents\wardrobe-stylist. First message to send:
 
-> Read CLAUDE.md, context-full.md and next-session.md in this folder fully before doing anything. Then confirm what you read by giving me one short table: current phase, what's next, your plan. After I confirm, follow next-session.md's "exact resume point" section in order. Repeat back the key rules (never print my API key, ask before every run that costs money with an estimate, explain non-technically) before starting.
-
-## If resuming in the web chat instead
-Attach context-full.md, next-session.md and the relevant script files, use starter-prompt.md as before. The web chat cannot run anything, so it reverts to the old model: it writes, the builder runs and pastes output.
+> Read CLAUDE.md, context-full.md, next-session.md and session-brief-v1.1.md fully before doing anything. Confirm the new plan back to me in one short table (phase order, what 7A involves, your build plan, technical risks), then build 7A only after I confirm. Ask before every run that costs money with an estimate. Explain non-technically as you go.
