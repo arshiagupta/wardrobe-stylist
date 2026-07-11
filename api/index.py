@@ -20,17 +20,15 @@ are not automatically importable, Vercel does not add the project
 root to sys.path for you. Added explicitly below, a documented
 workaround for this exact situation.
 
-Static files (public/index.html, public/photos/*.svg) are NOT served
-by this Flask app in production and never should be: confirmed by
-directly logging the deployed function's own filesystem (session 6)
-that Vercel does not bundle public/ into the function at all, it is a
-reserved, CDN-only directory regardless of the general "Python
-functions include everything" default. vercel.json's rewrite is
-scoped to "/api/(.*)" only, so "/" and "/photos/*" fall through to
-Vercel's native static hosting instead of reaching this function. The
-route and static_folder config below exist purely so `python
-api/index.py` still serves the full page for local testing; in
-production they are simply never reached, which is fine.
+Static files live in webapp/, not public/: confirmed by directly
+logging the deployed function's own filesystem (session 6) that
+Vercel never bundles a directory literally named public/ into a
+function, it is treated as reserved, CDN-only, regardless of the
+general "Python functions include everything" default. Naming it
+anything else means it bundles normally like every other project
+file, and this Flask app can serve it directly through the blanket
+rewrite in vercel.json ("/(.*)" -> /api/index), the same way it
+already correctly reads wardrobe/wardrobe.json.
 """
 import os
 import sys
@@ -43,7 +41,7 @@ from flask import Flask, request, jsonify
 
 import gap_fill
 
-app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, "public"), static_url_path="")
+app = Flask(__name__, static_folder=os.path.join(PROJECT_ROOT, "webapp"), static_url_path="")
 
 
 @app.route("/", methods=["GET"])

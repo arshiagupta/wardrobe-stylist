@@ -18,7 +18,7 @@ import json
 import os
 
 WARDROBE_PATH = os.path.join("wardrobe", "wardrobe.json")
-OUT_DIR = os.path.join("public", "photos")
+OUT_DIR = os.path.join("webapp", "photos")
 
 COLOUR_HEX = {
     "cream": "#F0E6D2", "red": "#B03A3A", "blue": "#3B5A8A", "pink": "#D98CA0",
