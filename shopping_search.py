@@ -5,8 +5,9 @@ Wraps Serper.dev's Google Shopping endpoint. Two things stay
 deterministic, in code, never left to the model (architecture
 principle 1, same discipline as constraint_engine.py):
 
-1. Merchant whitelist - only Zara, H&M and Mango pass, checked by
-   substring match against Serper's 'source' field.
+1. Merchant whitelist - a curated list of reputable UK retailers
+   (expanded session 7), checked by substring match against Serper's
+   'source' field, to keep junk marketplaces/resellers out.
 2. Budget filter - parsed from Serper's price string into a float,
    compared against the request's budget with plain arithmetic.
 
@@ -51,7 +52,18 @@ MAX_SEARCHES_PER_REQUEST = 2          # lowered 3 -> 2 session 7 (builder: 1-2 n
 MAX_RETRIES = 3
 CACHE_PATH = os.path.join("wardrobe", "shopping_cache.json")
 
-MERCHANT_WHITELIST = ["zara", "h&m", "mango"]  # substring match, case-insensitive, against Serper's 'source' field
+# Curated UK-retailer whitelist (expanded session 7 from just zara/h&m/mango, builder's
+# call: much more variety while still blocking junk marketplaces and resellers). Substring
+# match, case-insensitive, against Serper's 'source' field. Purpose now is junk-filtering,
+# not retailer-quality, since the link is a Google Shopping page regardless: admitting the
+# occasional legitimate non-target store is fine, letting eBay/AliExpress-type resellers
+# through is not.
+MERCHANT_WHITELIST = [
+    "zara", "h&m", "mango", "asos", "john lewis", "marks & spencer", "m&s",
+    "next", "uniqlo", "cos", "& other stories", "arket", "reiss", "whistles",
+    "river island", "massimo dutti", "new look", "ted baker", "boden", "hobbs",
+    "monsoon", "karen millen", "mint velvet", "phase eight",
+]
 
 
 class SearchBudgetExceeded(Exception):

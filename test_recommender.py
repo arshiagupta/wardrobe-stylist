@@ -42,6 +42,14 @@ def run():
           map_occasion_to_formality("WORK Dinner") == "smart casual")
     check("7 empty string returns None",
           map_occasion_to_formality("") is None)
+    check("7b 'formal wear' maps to formal (session 7 fix)",
+          map_occasion_to_formality("formal wear") == "formal")
+    check("7c 'informal gathering' maps to casual, not tricked by the 'formal' substring",
+          map_occasion_to_formality("informal gathering") == "casual")
+    check("7d 'work meeting' maps to business",
+          map_occasion_to_formality("work meeting") == "business")
+    check("7e 'cocktail party' maps to formal",
+          map_occasion_to_formality("cocktail party") == "formal")
 
     # --- bucket_items ---
     items = [item("top", id="t1"), item("bottom", id="b1"), item("footwear", id="f1")]
@@ -73,6 +81,14 @@ def run():
     gaps3 = detect_gaps(nothing, "formal", None)
     check("13 empty wardrobe reports both the outfit gap and the footwear gap",
           len(gaps3) == 2)
+
+    # menswear (7C): dresses are never mentioned as a missing item or alternative
+    mens = detect_gaps(bucket_items([item("top"), item("footwear")]), "casual", None, gender="menswear")
+    check("13b menswear missing bottom names bottoms, never dresses",
+          len(mens) == 1 and "bottoms" in mens[0] and "dress" not in mens[0])
+    womens = detect_gaps(bucket_items([item("top"), item("footwear")]), "casual", None, gender="womenswear")
+    check("13c womenswear still offers the dress alternative wording",
+          "dress" in womens[0])
 
     # --- validate_outfit_ids ---
     outfits = [{"rank": 1, "item_ids": ["w_real1", "w_fake2"], "reason": "x", "gap": None}]

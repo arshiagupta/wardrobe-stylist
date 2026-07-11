@@ -54,15 +54,20 @@ CATEGORY_BUCKETS = ["top", "bottom", "dress", "outerwear", "footwear", "accessor
 # that matches nothing falls back to no formality filter (shows every level),
 # printed as a visible warning, never a silent guess.
 OCCASION_FORMALITY_MAP = [
-    (["black tie", "gala", "wedding", "formal event"], "formal"),
-    (["interview", "business meeting", "boardroom"], "business"),
+    (["black tie", "gala", "wedding", "formal event", "formal wear", "formalwear",
+      "formal", "cocktail"], "formal"),
+    (["interview", "business meeting", "boardroom", "meeting", "presentation", "conference"], "business"),
     (["work", "office", "dinner", "date", "smart casual", "brunch date"], "smart casual"),
-    (["casual", "everyday", "weekend", "hangout", "brunch", "gym", "errand"], "casual"),
+    (["casual", "everyday", "weekend", "hangout", "brunch", "gym", "errand", "picnic"], "casual"),
 ]
 
 
 def map_occasion_to_formality(occasion):
     o = (occasion or "").strip().lower()
+    if not o:
+        return None
+    if "informal" in o:  # guard: 'informal' contains 'formal' but is casual, not formal
+        return "casual"
     for keywords, formality in OCCASION_FORMALITY_MAP:
         for kw in keywords:
             if kw in o:
@@ -79,20 +84,36 @@ def bucket_items(items):
     return buckets
 
 
-def detect_gaps(buckets, formality, season):
+MENSWEAR_VALUES = {"menswear", "men", "men's", "male", "man", "masculine"}
+
+
+def detect_gaps(buckets, formality, season, gender=None):
     """Deterministic completeness check: can a full outfit be assembled at
     all from what passed filtering? Returns precise gap strings, e.g.
     'no smart casual bottoms'. Only reports categories that are actually
-    empty, never a stylistic judgement call."""
+    empty, never a stylistic judgement call.
+
+    gender (7C): a stated menswear preference drops dresses from the model
+    entirely, so a menswear wardrobe is never told it lacks a dress or that a
+    dress would be an alternative. It never filters the user's own items, it
+    only shapes what "a complete outfit" means for the suggestions."""
     gaps = []
     label = " ".join(x for x in [formality, season] if x) or "any"
+    menswear = (gender or "").strip().lower() in MENSWEAR_VALUES
 
     has_dress = bool(buckets["dress"])
     has_top = bool(buckets["top"])
     has_bottom = bool(buckets["bottom"])
     has_footwear = bool(buckets["footwear"])
 
-    if not has_dress:
+    if menswear:
+        if not has_top and not has_bottom:
+            gaps.append(f"no {label} tops or bottoms - an outfit cannot be built at all")
+        elif not has_top:
+            gaps.append(f"no {label} tops")
+        elif not has_bottom:
+            gaps.append(f"no {label} bottoms")
+    elif not has_dress:
         if not has_top and not has_bottom:
             gaps.append(f"no {label} tops, bottoms or dresses - an outfit cannot be built at all")
         elif not has_top:
@@ -138,7 +159,7 @@ def compact_item(it):
     }
 
 
-def build_prompt(occasion, vibe, budget, formality, season, items, gaps, profile=None):
+def build_prompt(occasion, vibe, budget, formality, season, items, gaps, profile=None, anchor_item=None):
     items_json = json.dumps([compact_item(i) for i in items], ensure_ascii=False, indent=2)
     gaps_text = "; ".join(gaps) if gaps else "none - a full outfit can be assembled from the items below"
     formality_text = formality or "not determined from the occasion text, consider all formality levels"
@@ -153,6 +174,9 @@ def build_prompt(occasion, vibe, budget, formality, season, items, gaps, profile
     gender = (profile.get("gender") or "").strip().lower()
     gender_text = {"womenswear": "women's / feminine", "menswear": "men's / masculine"}.get(
         gender, "neutral / mixed")
+    outfit_shapes = ("a top + bottom + footwear, plus optional layering (jacket, overshirt, blazer). "
+                     "Do NOT propose dresses" if gender == "menswear"
+                     else "(a dress + footwear) or (a top + bottom + footwear)")
     age = profile.get("age")
     age_text = str(age) if age not in (None, "", 0) else "not given"
     meas = profile.get("measurements") or {}
@@ -160,6 +184,13 @@ def build_prompt(occasion, vibe, budget, formality, season, items, gaps, profile
                  + [f"{k} {v}" for k, v in meas.items() if v] if b]
     body_text = ", ".join(body_bits) if body_bits else "not given"
     likes_text = (profile.get("likes") or "").strip() or "not given"
+
+    anchor_text = ""
+    if anchor_item:
+        anchor_text = (f"\nStyle-this-item mode: the user specifically wants to wear "
+                       f"\"{anchor_item.get('display_name')}\" (id={anchor_item.get('id')}). EVERY "
+                       f"outfit you propose MUST include this exact item id. Build the best, most "
+                       f"distinct complementary looks around it for the occasion and vibe.\n")
 
     if budget_available:
         clash_rule = (
@@ -188,6 +219,9 @@ where it genuinely helps, but NEVER exclude an item they already own because of 
 - Age: {age_text}
 - Body type / measurements: {body_text}
 - Likes / preferred style: {likes_text}
+If a body type or measurements are given above, you MUST name the specific silhouette or
+proportion choice you made for them in the top outfit's reason (for example "defines the
+waist", "balances the hips", "elongates the leg line"), so the influence is visible.
 
 Below is the full list of wardrobe items that ALREADY PASSED deterministic hard
 filtering in code (the avoid-list and formality/season all already applied).
@@ -211,11 +245,15 @@ against them, not merely describe it:
 4. Pattern and texture: at most one bold pattern per outfit, or coordinate deliberately.
    Match texture to the occasion.
 5. Occasion fit: the whole look must read right for the stated occasion and vibe.
+6. Structure and layering: use layering and structure pieces where they suit the occasion.
+   A waistcoat, blazer, tailored shirt or jacket lifts a work, business or formal look. For
+   dressier occasions prefer tailored pieces over casual basics, and do not leave an obvious
+   layering opportunity unused when the wardrobe has one.
 
 {clash_rule}
-
+{anchor_text}
 Task: propose up to 6 genuinely distinct, well-composed outfits, best first. Each outfit is
-normally (a dress + footwear) or (a top + bottom + footwear). Reusing an item across outfits
+normally {outfit_shapes}. Reusing an item across outfits
 is fine in a small wardrobe, do not fabricate items to avoid it. For any structurally missing
 category, list each missing piece as its own separate, precise, purchasable description in
 "gaps" (never one combined sentence). If nothing is missing and nothing needs replacing,
@@ -264,7 +302,7 @@ def call_model(client, types_mod, prompt):
     raise RuntimeError(f"ranking call failed after {MAX_RETRIES} attempts: {last_err}")
 
 
-def get_outfits(occasion, vibe, budget, season, wardrobe=None, profile=None):
+def get_outfits(occasion, vibe, budget, season, wardrobe=None, profile=None, anchor_id=None):
     """Does the full Phase 3 pipeline and returns everything both main()
     (terminal printing) and gap_fill.py (Phase 4) need. Makes at most one
     AI call. Returns a dict; see the keys set below.
@@ -288,8 +326,19 @@ def get_outfits(occasion, vibe, budget, season, wardrobe=None, profile=None):
         request["season"] = season
 
     passing, excluded = filter_wardrobe(wardrobe, profile, request)
+
+    # "Style this item" mode (7C): the user picked one item to build outfits
+    # around. Force it into the candidate set even if the occasion's formality
+    # filter would otherwise drop it, since including it is the whole point. The
+    # other items are still filtered normally.
+    anchor_item = None
+    if anchor_id:
+        anchor_item = next((it for it in wardrobe if it.get("id") == anchor_id), None)
+        if anchor_item and anchor_item["id"] not in {it["id"] for it in passing}:
+            passing = passing + [anchor_item]
+
     buckets = bucket_items(passing)
-    gaps = detect_gaps(buckets, formality, season)
+    gaps = detect_gaps(buckets, formality, season, (profile or {}).get("gender"))
     valid_ids = {it["id"] for it in passing}
     items_by_id = {it["id"]: it for it in passing}
 
@@ -318,7 +367,7 @@ def get_outfits(occasion, vibe, budget, season, wardrobe=None, profile=None):
     if not api_key:
         sys.exit("GEMINI_API_KEY is not set.")
 
-    prompt = build_prompt(occasion, vibe, budget, formality, season, passing, gaps, profile)
+    prompt = build_prompt(occasion, vibe, budget, formality, season, passing, gaps, profile, anchor_item)
     client = genai.Client(api_key=api_key)
     resp = call_model(client, types, prompt)
 

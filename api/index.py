@@ -127,9 +127,15 @@ def style():
     if profile is not None and not isinstance(profile, dict):
         return jsonify({"error": "profile must be an object"}), 400
 
+    # "Style this item" mode (7C): an optional wardrobe item id to build every
+    # outfit around.
+    anchor_id = body.get("anchor_id")
+    if anchor_id is not None and not isinstance(anchor_id, str):
+        return jsonify({"error": "anchor_id must be a string"}), 400
+
     try:
         outcome = gap_fill.fill_gaps_for_request(
-            occasion, vibe, budget, season, wardrobe=wardrobe, profile=profile)
+            occasion, vibe, budget, season, wardrobe=wardrobe, profile=profile, anchor_id=anchor_id)
     except SystemExit as e:
         # get_outfits()/fill_gaps_for_request() call sys.exit on a missing API
         # key. Translate that into a proper error response, not a hard crash.

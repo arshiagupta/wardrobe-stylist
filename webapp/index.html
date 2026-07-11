@@ -84,7 +84,13 @@
   #uploadStatus.err { color:#b91c1c; }
 
   /* gallery */
-  .gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px; margin-top:18px; }
+  .gallery { margin-top:8px; }
+  .gsection h3 { font-size:1rem; margin:22px 0 12px; display:flex; align-items:baseline; gap:8px; }
+  .gsection h3 .muted-s { font-weight:400; }
+  .gsection .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px; }
+  .gcard .acts { display:flex; gap:6px; margin-top:6px; }
+  .mini-btn { flex:1; border:1px solid var(--line); background:var(--bg); border-radius:8px; padding:5px 6px; font:inherit; font-size:.72rem; cursor:pointer; color:var(--ink); }
+  .mini-btn:hover { background:var(--surface); border-color:var(--accent); color:var(--accent); }
   .gcard { position:relative; }
   .gcard img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px; border:1px solid var(--line); display:block; }
   .gcard .cap { font-size:.78rem; color:var(--ink-soft); margin-top:7px; line-height:1.25; }
@@ -126,6 +132,16 @@
   .cost-strip { margin-top:18px; padding:12px 14px; border-radius:10px; background:var(--surface); font-size:.82rem; color:var(--muted); }
   .cost-strip strong { color:var(--ink); }
   footer { border-top:1px solid var(--line); padding:22px 0 40px; font-size:.78rem; color:var(--muted); text-align:center; }
+
+  /* anchor chip + styled-for + modal */
+  .anchor-chip { display:inline-flex; align-items:center; gap:10px; background:var(--accent-soft); color:var(--accent); border:1px solid #dcd8fb; border-radius:999px; padding:8px 14px; font-size:.86rem; font-weight:600; margin-bottom:16px; }
+  .anchor-chip button { background:none; border:none; color:var(--accent); cursor:pointer; font:inherit; font-size:1.1rem; line-height:1; padding:0; }
+  .styled-for { font-size:.82rem; color:var(--muted); margin:0 0 14px; }
+  .styled-for strong { color:var(--ink-soft); font-weight:600; }
+  .modal-backdrop { position:fixed; inset:0; background:rgba(17,17,20,.45); display:flex; align-items:center; justify-content:center; padding:20px; z-index:50; }
+  .modal { background:var(--bg); border-radius:16px; padding:22px; max-width:420px; width:100%; max-height:90vh; overflow:auto; }
+  .modal h3 { margin:0 0 16px; font-size:1.1rem; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
 
   @media (max-width:640px) {
     .grid2, .steps, .pgrid { grid-template-columns:1fr; }
@@ -197,6 +213,9 @@
       <div id="uploadStatus"></div>
     </div>
     <div class="gallery" id="gallery"></div>
+    <div id="toStyleWrap" style="display:none; margin-top:24px; text-align:center;">
+      <button class="btn" data-tab="style">Wardrobe ready &mdash; get styled &rarr;</button>
+    </div>
   </div>
 </section>
 
@@ -205,6 +224,7 @@
   <div class="container">
     <h2 class="sec">Style me</h2>
     <p class="sub">Tell the stylist the occasion. Vibe, budget and season are optional.</p>
+    <div id="anchorChip" class="anchor-chip" style="display:none"></div>
 
     <details class="card">
       <summary>Your profile <span class="muted-s" style="font-weight:400">optional, sharpens suggestions</span></summary>
@@ -276,6 +296,37 @@
   <div class="container">Portfolio demo. Your wardrobe and profile stay in your own browser, never on the server. Gap-fill product links go to Google Shopping, not directly to the retailer.</div>
 </footer>
 
+<div id="editModal" class="modal-backdrop" style="display:none">
+  <div class="modal">
+    <h3>Edit item</h3>
+    <div class="grid2">
+      <div class="full"><label for="eName">Name</label><input id="eName"></div>
+      <div><label for="eCat">Category</label>
+        <select id="eCat">
+          <option value="top">Top</option><option value="bottom">Bottom</option>
+          <option value="dress">Dress</option><option value="outerwear">Outerwear</option>
+          <option value="footwear">Footwear</option><option value="accessory">Accessory</option>
+        </select></div>
+      <div><label for="eForm">Formality</label>
+        <select id="eForm">
+          <option value="casual">Casual</option><option value="smart casual">Smart casual</option>
+          <option value="business">Business</option><option value="formal">Formal</option>
+        </select></div>
+      <div><label for="eColour">Main colour</label><input id="eColour" placeholder="e.g. navy"></div>
+      <div><label for="eSeason">Season</label>
+        <select id="eSeason">
+          <option value="all season">All season</option><option value="summer">Summer</option>
+          <option value="winter">Winter</option><option value="transitional">Transitional</option>
+        </select></div>
+      <div class="full"><label style="display:flex;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="eReviewed" style="width:auto"> Mark as reviewed (clears the flag)</label></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn secondary" id="eCancel">Cancel</button>
+      <button class="btn" id="eSave">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const STORAGE_KEY = 'ws_wardrobe_v1';
 const PROFILE_KEY = 'ws_profile_v1';
@@ -319,24 +370,46 @@ function saveWardrobe() {
 }
 function setUploadStatus(msg, isErr) { uploadStatus.textContent = msg || ''; uploadStatus.className = isErr ? 'err' : ''; }
 
+const CATEGORY_GROUPS = [
+  ['top', 'Tops'], ['bottom', 'Bottoms'], ['dress', 'Dresses'],
+  ['outerwear', 'Outerwear'], ['footwear', 'Footwear'], ['accessory', 'Bags & accessories'],
+];
+function gcardHtml(it) {
+  const src = wardrobe.thumbs[it.id];
+  const img = src ? `<img src="${esc(src)}" alt="${esc(it.display_name)}">`
+                  : `<div class="ph" style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:.72rem;padding:8px;text-align:center">${esc(it.display_name)}</div>`;
+  const rev = it.needs_review ? `<div class="rev">needs review</div>` : '';
+  return `<div class="gcard">
+    <span class="x" data-id="${esc(it.id)}" title="remove">&times;</span>
+    ${img}
+    <div class="cap">${esc(it.display_name)}</div>${rev}
+    <div class="acts"><button class="mini-btn" data-style="${esc(it.id)}">Style this</button><button class="mini-btn" data-edit="${esc(it.id)}">Edit</button></div>
+  </div>`;
+}
 function renderWardrobe() {
   const n = wardrobe.items.length;
   uploadCount.textContent = n === 1 ? '1 item' : `${n} items`;
   clearLink.style.display = n ? 'inline' : 'none';
   updateNavCount($('navWardrobeCount'), n);
+  $('toStyleWrap').style.display = n ? 'block' : 'none';
   const capped = n >= MAX_ITEMS;
   uploadBtn.classList.toggle('disabled', capped);
   photoInput.disabled = capped;
 
   if (!n) { galleryEl.innerHTML = `<div class="empty">No items yet. Add photos of your clothes above.</div>`; return; }
-  galleryEl.innerHTML = wardrobe.items.map((it) => {
-    const src = wardrobe.thumbs[it.id];
-    const img = src ? `<img src="${esc(src)}" alt="${esc(it.display_name)}">`
-                    : `<div class="pcard-ph"></div>`;
-    const rev = it.needs_review ? `<div class="rev">needs review</div>` : '';
-    return `<div class="gcard"><span class="x" data-id="${esc(it.id)}" title="remove">&times;</span>${img}<div class="cap">${esc(it.display_name)}</div>${rev}</div>`;
-  }).join('');
+
+  const known = new Set(CATEGORY_GROUPS.map((g) => g[0]));
+  const groups = CATEGORY_GROUPS.map(([cat, label]) => [label, wardrobe.items.filter((it) => it.category === cat)]);
+  const others = wardrobe.items.filter((it) => !known.has(it.category));
+  if (others.length) groups.push(['Other', others]);
+
+  galleryEl.innerHTML = groups.filter(([, its]) => its.length).map(([label, its]) =>
+    `<div class="gsection"><h3>${esc(label)} <span class="muted-s">${its.length}</span></h3><div class="grid">${its.map(gcardHtml).join('')}</div></div>`
+  ).join('');
+
   galleryEl.querySelectorAll('.x').forEach((el) => el.addEventListener('click', () => removeItem(el.dataset.id)));
+  galleryEl.querySelectorAll('[data-style]').forEach((el) => el.addEventListener('click', () => setAnchor(el.dataset.style)));
+  galleryEl.querySelectorAll('[data-edit]').forEach((el) => el.addEventListener('click', () => openEdit(el.dataset.edit)));
 }
 function removeItem(id) {
   wardrobe.items = wardrobe.items.filter((it) => it.id !== id);
@@ -418,6 +491,66 @@ clearLink.addEventListener('click', () => {
   wardrobe = { items: [], thumbs: {} }; extractionCostTotal = 0;
   saveWardrobe(); renderWardrobe(); setUploadStatus('');
 });
+
+/* ---------- edit item (fix a mis-read or needs-review item) ---------- */
+let editingId = null;
+function openEdit(id) {
+  const it = wardrobe.items.find((x) => x.id === id);
+  if (!it) return;
+  editingId = id;
+  $('eName').value = it.display_name || '';
+  $('eCat').value = it.category || 'top';
+  $('eForm').value = it.formality || 'casual';
+  $('eColour').value = it.colour_primary || '';
+  $('eSeason').value = it.season || 'all season';
+  $('eReviewed').checked = false;
+  $('editModal').style.display = 'flex';
+}
+function closeEdit() { $('editModal').style.display = 'none'; editingId = null; }
+$('eCancel').addEventListener('click', closeEdit);
+$('editModal').addEventListener('click', (e) => { if (e.target.id === 'editModal') closeEdit(); });
+$('eSave').addEventListener('click', () => {
+  const it = wardrobe.items.find((x) => x.id === editingId);
+  if (it) {
+    it.display_name = $('eName').value.trim() || it.display_name;
+    it.category = $('eCat').value;
+    it.formality = $('eForm').value;
+    it.colour_primary = $('eColour').value.trim().toLowerCase() || it.colour_primary;
+    it.season = $('eSeason').value;
+    if ($('eReviewed').checked) it.needs_review = false;
+    saveWardrobe(); renderWardrobe();
+  }
+  closeEdit();
+});
+
+/* ---------- style-this-item anchor ---------- */
+let anchorId = null;
+function renderAnchor(name) {
+  const el = $('anchorChip');
+  if (anchorId && name) {
+    el.style.display = 'inline-flex';
+    el.innerHTML = `Styling around: ${esc(name)} <button id="anchorClear" title="stop styling around this">&times;</button>`;
+    $('anchorClear').addEventListener('click', clearAnchor);
+  } else { el.style.display = 'none'; el.innerHTML = ''; }
+}
+function setAnchor(id) {
+  const it = wardrobe.items.find((x) => x.id === id);
+  if (!it) return;
+  anchorId = id; renderAnchor(it.display_name); showTab('style');
+}
+function clearAnchor() { anchorId = null; renderAnchor(null); }
+
+/* ---------- transparency: what profile was applied ---------- */
+function styledForLine(p) {
+  const bits = [];
+  if (p.gender) bits.push(p.gender === 'womenswear' ? "women's" : (p.gender === 'menswear' ? "men's" : 'neutral / mixed'));
+  if (p.age) bits.push('age ' + p.age);
+  if (p.body_type) bits.push(p.body_type);
+  Object.entries(p.measurements || {}).filter(([, v]) => v).forEach(([k, v]) => bits.push(`${k} ${v}`));
+  if (p.likes) bits.push('likes ' + p.likes);
+  if (p.avoid_terms && p.avoid_terms.length) bits.push('avoiding ' + p.avoid_terms.join(', '));
+  return bits.length ? `<div class="styled-for">Styled for: <strong>${esc(bits.join(' · '))}</strong></div>` : '';
+}
 
 /* ---------- profile ---------- */
 const pEls = { gender: $('pGender'), age: $('pAge'), body_type: $('pBody'), height: $('pHeight'),
@@ -527,6 +660,7 @@ form.addEventListener('submit', async (e) => {
     occasion, vibe: $('vibe').value.trim(),
     budget: $('budget').value || null, season: $('season').value || null,
     wardrobe: wardrobe.items, profile: currentProfile(),
+    anchor_id: anchorId,
   };
   submitBtn.disabled = true; errorEl.style.display = 'none'; resultsEl.innerHTML = '';
   statusEl.textContent = 'Styling in progress, usually a few seconds...';
@@ -537,6 +671,7 @@ form.addEventListener('submit', async (e) => {
     statusEl.textContent = '';
     lastStyle = { occasion, vibe: body.vibe, outfits: data.outfits || [] };
     let html = '';
+    html += styledForLine(body.profile);
     if (data.structural_gaps && data.structural_gaps.length)
       html += `<div class="gaps-box"><strong>Gaps detected:</strong> ${data.structural_gaps.map(esc).join('; ')}</div>`;
     if (!data.outfits || !data.outfits.length)
