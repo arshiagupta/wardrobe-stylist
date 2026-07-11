@@ -47,7 +47,7 @@ SERPER_ENDPOINT = "https://google.serper.dev/shopping"
 API_KEY_ENV = "SERPER_API_KEY"
 COUNTRY = "gb"                        # Google 'gl' param, ISO 3166-1 alpha-2. NOT "uk", see note above.
 NUM_RESULTS = 10
-MAX_SEARCHES_PER_REQUEST = 3          # locked session 3, enforced via the search_count argument
+MAX_SEARCHES_PER_REQUEST = 2          # lowered 3 -> 2 session 7 (builder: 1-2 new buys max, trims cost)
 MAX_RETRIES = 3
 CACHE_PATH = os.path.join("wardrobe", "shopping_cache.json")
 

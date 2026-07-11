@@ -57,9 +57,21 @@ GENDERS = {"womenswear", "menswear", "unisex"}
 PATTERNS = {"solid", "striped", "floral", "check", "graphic", "colour block", "other"}
 FITS = {"slim", "regular", "relaxed", "oversized"}
 
-PROMPT = """You are a fashion attribute extractor. Look at this single clothing item photo.
-Return ONLY a JSON object, no markdown fences, with exactly these keys:
+PROMPT = """You are a fashion attribute extractor. Look at this photo. It may show ONE
+garment (a flat-lay or hanger shot) or SEVERAL distinct garments at once (e.g. a person
+wearing a top, a skirt and shoes).
 
+Return ONLY a JSON object, no markdown fences, of exactly this shape:
+{
+  "items": [ { ...one entry per distinct garment... } ]
+}
+
+Include one entry for EACH distinct, clearly visible, separately wearable garment or pair
+of footwear (and any prominent accessory such as a bag). If only one garment is clearly
+the subject, return a single entry. Do NOT invent items you cannot clearly see, and skip
+anything too small, blurry or occluded to describe reliably.
+
+Each entry must have exactly these keys:
 {
   "display_name": "short human label, e.g. 'navy straight-leg jeans'",
   "category": "one of: top, bottom, dress, outerwear, footwear, accessory",
@@ -76,13 +88,10 @@ Return ONLY a JSON object, no markdown fences, with exactly these keys:
   "length_attributes": {"sleeve": "e.g. long/short/sleeveless or null",
                         "hem": "e.g. mini/midi/maxi/ankle/cropped or null",
                         "rise": "e.g. high/mid/low or null"},
-  "style_tags": ["up to 5 lowercase tags, e.g. 'minimal', 'boho', 'workwear'"],
-  "multiple_items_detected": false
+  "style_tags": ["up to 5 lowercase tags, e.g. 'minimal', 'boho', 'workwear'"]
 }
 
-If the photo shows more than one garment, describe the dominant one and set
-multiple_items_detected to true. If a field cannot be judged from the photo, use null.
-Do not invent attributes you cannot see."""
+If a field cannot be judged from the photo, use null. Do not invent attributes you cannot see."""
 
 
 def sha256_file(path):
@@ -118,15 +127,17 @@ def coerce_enum(value, allowed):
     return None
 
 
-def validate(raw, filename, file_hash):
-    """Enforce the shared schema in code. Anything off-spec is nulled and flagged."""
+def validate(raw, filename, file_hash, index=0):
+    """Enforce the shared schema in code. Anything off-spec is nulled and flagged.
+    index disambiguates multiple items extracted from the same photo, so their ids
+    do not collide (a worn photo can yield a top, a bottom and footwear at once)."""
     needs_review = False
     la = raw.get("length_attributes") or {}
     if not isinstance(la, dict):
         la = {}
 
     item = {
-        "id": "w_" + file_hash[:10],
+        "id": f"w_{file_hash[:10]}_{index}",
         "source": "wardrobe",
         "image_ref": filename,
         "file_hash": file_hash,
@@ -163,6 +174,30 @@ def validate(raw, filename, file_hash):
         needs_review = True
     item["needs_review"] = needs_review
     return item
+
+
+def parse_items(resp_text, filename, file_hash):
+    """Parse the model's response into a list of validated items. The prompt asks
+    for {"items": [...]}, so one photo can yield several garments. Tolerant of a
+    model that returns a single flat object instead of the list, so an off-shape
+    response degrades to one item rather than crashing."""
+    text = (resp_text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`").removeprefix("json").strip()
+    data = json.loads(text)
+
+    if isinstance(data, dict) and isinstance(data.get("items"), list):
+        raw_items = data["items"]
+    elif isinstance(data, dict):
+        raw_items = [data]  # model ignored the wrapper, treat as one item
+    else:
+        raw_items = []
+
+    items = []
+    for idx, raw in enumerate(raw_items):
+        if isinstance(raw, dict):
+            items.append(validate(raw, filename, file_hash, idx))
+    return items
 
 
 def call_vision(client, types_mod, img_bytes, mime):
@@ -214,38 +249,35 @@ def get_genai_client(api_key=None):
     return genai.Client(api_key=key), types
 
 
-def extract_item_from_bytes(img_bytes, mime, filename="upload", client=None, types_mod=None):
-    """Vision-extract ONE image that is already in memory (no disk read, no
-    disk write), validate it against the shared schema, and return
-    (item, cost_usd, in_tok, out_tok).
+def extract_items_from_bytes(img_bytes, mime, filename="upload", client=None, types_mod=None):
+    """Vision-extract an image already in memory (no disk read, no disk write)
+    and return (items, cost_usd, in_tok, out_tok). One photo can yield SEVERAL
+    items now (a worn photo showing a top + skirt + shoes becomes three separate
+    wardrobe items), so this returns a list.
 
-    This is the multi-user web path (7A): a visitor's uploaded photo is
-    extracted and the resulting JSON is handed straight back to their browser,
-    never cached to wardrobe.json on the server. The local folder pipeline in
-    main() is deliberately left untouched and still writes to wardrobe.json for
-    the builder's own bulk work."""
+    This is the multi-user web path: a visitor's uploaded photo is extracted and
+    the resulting JSON is handed straight back to their browser, never cached to
+    any file on the server. Cost is for the single vision call, regardless of how
+    many items came out of it, so the caller meters it once per photo."""
     if client is None or types_mod is None:
         client, types_mod = get_genai_client()
 
     file_hash = sha256_bytes(img_bytes)
     resp = call_vision(client, types_mod, img_bytes, mime)
 
-    text = (resp.text or "").strip()
-    if text.startswith("```"):
-        text = text.strip("`").removeprefix("json").strip()
-    raw = json.loads(text)
-
     usage = getattr(resp, "usage_metadata", None)
     in_tok = getattr(usage, "prompt_token_count", 0) or 0
     out_tok = getattr(usage, "candidates_token_count", 0) or 0
     cost = (in_tok / 1e6) * PRICE_PER_M_INPUT + (out_tok / 1e6) * PRICE_PER_M_OUTPUT
 
-    item = validate(raw, filename, file_hash)
-    item["extraction_meta"] = {
+    items = parse_items(resp.text, filename, file_hash)
+    meta = {
         "model": MODEL, "input_tokens": in_tok, "output_tokens": out_tok,
-        "est_cost_usd": round(cost, 6),
+        "est_cost_usd": round(cost, 6), "items_from_same_photo": len(items),
     }
-    return item, cost, in_tok, out_tok
+    for it in items:
+        it["extraction_meta"] = meta
+    return items, cost, in_tok, out_tok
 
 
 def main():
@@ -303,36 +335,37 @@ def main():
 
         try:
             resp = call_vision(client, types, img_bytes, mime)
-            text = (resp.text or "").strip()
-            if text.startswith("```"):
-                text = text.strip("`").removeprefix("json").strip()
-            raw = json.loads(text)
+            usage = getattr(resp, "usage_metadata", None)
+            in_tok = getattr(usage, "prompt_token_count", 0) or 0
+            out_tok = getattr(usage, "candidates_token_count", 0) or 0
+            item_cost = (in_tok / 1e6) * PRICE_PER_M_INPUT + (out_tok / 1e6) * PRICE_PER_M_OUTPUT
+            items = parse_items(resp.text, filename, file_hash)
         except Exception as e:  # noqa: BLE001
             print(f"    FAILED: {e}")
             failed.append(filename)
             continue
 
-        usage = getattr(resp, "usage_metadata", None)
-        in_tok = getattr(usage, "prompt_token_count", 0) or 0
-        out_tok = getattr(usage, "candidates_token_count", 0) or 0
-        item_cost = (in_tok / 1e6) * PRICE_PER_M_INPUT + (out_tok / 1e6) * PRICE_PER_M_OUTPUT
+        if not items:
+            print("    (no describable garment found, skipped)")
+            failed.append(filename)
+            continue
 
-        item = validate(raw, filename, file_hash)
-        item["extraction_meta"] = {
-            "model": MODEL, "input_tokens": in_tok, "output_tokens": out_tok,
-            "est_cost_usd": round(item_cost, 6),
-        }
-        cache["items"].append(item)
+        meta = {"model": MODEL, "input_tokens": in_tok, "output_tokens": out_tok,
+                "est_cost_usd": round(item_cost, 6), "items_from_same_photo": len(items)}
+        for it in items:
+            it["extraction_meta"] = meta
+            cache["items"].append(it)
         known_hashes.add(file_hash)
-        save_cache(cache)  # crash-safe, saved after every item
+        save_cache(cache)  # crash-safe, saved after every photo
 
         run_cost += item_cost
         run_in_tokens += in_tok
         run_out_tokens += out_tok
         processed += 1
-        flag = "  [needs review]" if item["needs_review"] else ""
-        print(f"    -> {item['display_name']} | {item['category']} | "
-              f"{item['colour_primary']} | ${item_cost:.5f}{flag}")
+        for it in items:
+            flag = "  [needs review]" if it["needs_review"] else ""
+            print(f"    -> {it['display_name']} | {it['category']} | {it['colour_primary']}{flag}")
+        print(f"    (photo cost ${item_cost:.5f}, {len(items)} item(s) from this photo)")
         time.sleep(SLEEP_BETWEEN_CALLS)
 
     cache["run_log"].append({

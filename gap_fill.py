@@ -186,6 +186,18 @@ def fill_gaps_for_request(occasion, vibe, budget, season, wardrobe=None, profile
     outcome["gap_fill_total_cost"] = 0.0
     outcome["live_searches_used"] = 0
 
+    # Budget-gated (builder rule, session 7): with no budget, never run a paid
+    # product search. Any gap the model named (a missing category, or a stylistic
+    # replacement it flagged) is surfaced as a text note only, no Serper, no cost.
+    if not budget or budget <= 0:
+        for outfit in outcome["outfits"]:
+            outfit["gap_fills"] = [
+                {"gap": g, "picked": False,
+                 "reason": "styling note only - set a budget above 0 to get a shoppable suggestion"}
+                for g in (outfit.get("gaps") or [])
+            ]
+        return outcome
+
     if not any(o.get("gaps") for o in outcome["outfits"]):
         return outcome
 

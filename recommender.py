@@ -143,11 +143,29 @@ def build_prompt(occasion, vibe, budget, formality, season, items, gaps):
     gaps_text = "; ".join(gaps) if gaps else "none - a full outfit can be assembled from the items below"
     formality_text = formality or "not determined from the occasion text, consider all formality levels"
     season_text = season or "any"
-    budget_text = f"£{budget:.0f}" if budget is not None else "not specified"
+    budget_available = budget is not None and budget > 0
+    budget_text = f"£{budget:.0f}" if budget_available else "no budget set"
 
-    return f"""You are a wardrobe stylist. Occasion: "{occasion}" (mapped formality: {formality_text}).
-Season preference: {season_text}. Requested vibe/style: "{vibe or 'not specified'}".
-Budget available for any gap-fill purchase later: {budget_text} (context only, do not reason about it beyond that).
+    if budget_available:
+        clash_rule = (
+            f"If the ONLY owned item that fits a slot clashes with the rest of the look "
+            f"(for example athletic or running trainers under a delicate or dressy outfit), do "
+            f"NOT force it in. Build the outfit from the items that DO work together, leave the "
+            f"clashing item OUT of item_ids, and add a precise, purchasable description of a "
+            f"better replacement to \"gaps\" (within £{budget:.0f}). Explain the swap in the reason."
+        )
+    else:
+        clash_rule = (
+            "There is NO budget to buy anything, so build each outfit only from the owned items. "
+            "If the only owned item in a slot clashes (for example athletic trainers under a "
+            "delicate or dressy outfit), still use it, but say plainly in the reason that it is a "
+            "compromise and why, and rank that outfit LOWER than cleaner ones. Do NOT put a "
+            "stylistic replacement in \"gaps\" when there is no budget; only genuinely missing "
+            "categories (detected in code, listed below) belong in \"gaps\"."
+        )
+
+    return f"""You are an expert wardrobe stylist. Occasion: "{occasion}" (mapped formality: {formality_text}).
+Season preference: {season_text}. Requested vibe/style: "{vibe or 'not specified'}". Budget for any new buy: {budget_text}.
 
 Below is the full list of wardrobe items that ALREADY PASSED deterministic hard
 filtering in code (blockers and formality/season/gender all already applied).
@@ -155,19 +173,32 @@ Only reference items from this list, by id. Never invent an id or an item.
 
 {items_json}
 
-Known structural gaps already detected in code (do not contradict these, word
-them naturally into any outfit they affect): {gaps_text}
+Known structural gaps already detected in code (categories with nothing available;
+do not contradict these, word them naturally into any outfit they affect): {gaps_text}
 
-Task: propose up to 6 distinct outfit ideas ranked by how well they suit the
-occasion and vibe, best first. Each outfit is normally either (a dress +
-footwear) or (a top + bottom + footwear). Reusing an item across more than one
-outfit is fine if the wardrobe is small, do not fabricate items to avoid it.
-If a needed category is structurally missing per the gaps above, still build
-the outfit from what exists and list each missing piece as its own separate,
-precise, purchasable description in "gaps" (e.g. two separate entries, one for
-trousers and one for shoes, if both are missing, never one combined sentence).
-Otherwise "gaps" must be an empty list. If fewer than 6 genuinely distinct
-outfits are possible, return fewer rather than padding with near-duplicates.
+Apply these styling principles to EVERY outfit, and make the reason justify the look
+against them, not merely describe it:
+1. Colour: keep to about 2-3 colours. Anchor with a neutral (black, white, grey, beige,
+   navy, brown, cream). Prefer colours that harmonise (analogous, or a neutral base plus
+   one accent). Avoid several strong, competing colour families at once.
+2. Formality coherence: all pieces should sit at a similar formality. Athletic or running
+   footwear reads sporty and undercuts delicate fabrics (chiffon, satin, silk) or tailored
+   pieces, unless the requested vibe is explicitly sporty.
+3. Proportion and silhouette: balance volume, e.g. a relaxed top with a fitted bottom, or
+   vice versa. Mind hem and rise.
+4. Pattern and texture: at most one bold pattern per outfit, or coordinate deliberately.
+   Match texture to the occasion.
+5. Occasion fit: the whole look must read right for the stated occasion and vibe.
+
+{clash_rule}
+
+Task: propose up to 6 genuinely distinct, well-composed outfits, best first. Each outfit is
+normally (a dress + footwear) or (a top + bottom + footwear). Reusing an item across outfits
+is fine in a small wardrobe, do not fabricate items to avoid it. For any structurally missing
+category, list each missing piece as its own separate, precise, purchasable description in
+"gaps" (never one combined sentence). If nothing is missing and nothing needs replacing,
+"gaps" is an empty list. Return fewer than 6 rather than padding with near-duplicates or
+incoherent looks.
 
 Return ONLY JSON, no markdown fences, in exactly this shape:
 {{
@@ -175,8 +206,8 @@ Return ONLY JSON, no markdown fences, in exactly this shape:
     {{
       "rank": 1,
       "item_ids": ["w_xxxxxxxxxx"],
-      "reason": "one or two sentence styling explanation",
-      "gaps": ["precise missing-item description", "..."]
+      "reason": "one or two sentence styling explanation grounded in the principles",
+      "gaps": ["precise missing-or-replacement item description", "..."]
     }}
   ]
 }}"""

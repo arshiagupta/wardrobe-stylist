@@ -59,11 +59,11 @@ def index():
 
 @app.route("/api/extract", methods=["POST"])
 def extract():
-    """Multi-user upload (7A): one clothing photo in, one wardrobe item JSON
-    out. The result is returned to the caller's browser and stored there in
-    localStorage, never written to any server file. Cost is metered per photo
-    and returned, so the page can show a running total and enforce its own
-    per-session cap."""
+    """Multi-user upload: one clothing photo in, a LIST of wardrobe items out
+    (a worn photo showing a top + skirt + shoes becomes several items). The
+    result is returned to the caller's browser and stored there in localStorage,
+    never written to any server file. Cost is metered once per photo, regardless
+    of how many items came out, so the page can show a running total."""
     f = request.files.get("photo")
     if f is None:
         return jsonify({"error": "no photo uploaded (expected form field 'photo')"}), 400
@@ -78,7 +78,7 @@ def extract():
         return jsonify({"error": "uploaded file was empty"}), 400
 
     try:
-        item, cost, in_tok, out_tok = extract_wardrobe.extract_item_from_bytes(
+        items, cost, in_tok, out_tok = extract_wardrobe.extract_items_from_bytes(
             img_bytes, mime, filename=(f.filename or "upload"))
     except RuntimeError as e:
         # missing SDK or API key: a config problem, not the user's fault
@@ -88,7 +88,7 @@ def extract():
         return jsonify({"error": f"extraction failed: {e}"}), 500
 
     return jsonify({
-        "item": item,
+        "items": items,
         "cost_usd": round(cost, 6),
         "input_tokens": in_tok,
         "output_tokens": out_tok,

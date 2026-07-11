@@ -296,16 +296,19 @@ async function processFile(file, indexLabel) {
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || `extraction failed (${resp.status})`);
 
-  const item = data.item;
-  if (wardrobe.items.some((it) => it.id === item.id)) {
-    return { skipped: true, name: item.display_name };
+  extractionCostTotal += (data.cost_usd || 0);  // once per photo, even if it yields several items
+  const items = data.items || [];
+  let added = 0, skipped = 0, overflow = 0;
+  for (const item of items) {
+    if (wardrobe.items.some((it) => it.id === item.id)) { skipped++; continue; }
+    if (wardrobe.items.length >= MAX_ITEMS) { overflow++; continue; }
+    wardrobe.items.push(item);
+    wardrobe.thumbs[item.id] = thumbUrl;  // items from the same photo share its thumbnail
+    added++;
   }
-  wardrobe.items.push(item);
-  wardrobe.thumbs[item.id] = thumbUrl;
-  extractionCostTotal += (data.cost_usd || 0);
   saveWardrobe();
   renderWardrobe();
-  return { skipped: false, name: item.display_name };
+  return { added, skipped, overflow, found: items.length };
 }
 
 photoInput.addEventListener('change', async () => {
@@ -313,22 +316,22 @@ photoInput.addEventListener('change', async () => {
   photoInput.value = '';  // allow re-selecting the same file later
   if (!files.length) return;
 
-  const room = MAX_ITEMS - wardrobe.items.length;
-  if (room <= 0) {
+  if (wardrobe.items.length >= MAX_ITEMS) {
     setUploadStatus(`Wardrobe is full (${MAX_ITEMS} items). Remove some to add more.`, true);
     return;
   }
-  const batch = files.slice(0, room);
-  const overflow = files.length - batch.length;
 
   uploadBtn.classList.add('disabled');
   photoInput.disabled = true;
-  let added = 0, skipped = 0, failed = 0;
+  let added = 0, skipped = 0, failed = 0, hitCap = false, foundNothing = 0;
 
-  for (let i = 0; i < batch.length; i++) {
+  for (let i = 0; i < files.length; i++) {
+    if (wardrobe.items.length >= MAX_ITEMS) { hitCap = true; break; }  // stop before billing more
     try {
-      const r = await processFile(batch[i], `photo ${i + 1} of ${batch.length}`);
-      if (r.skipped) skipped++; else added++;
+      const r = await processFile(files[i], `photo ${i + 1} of ${files.length}`);
+      added += r.added; skipped += r.skipped;
+      if (r.overflow) hitCap = true;
+      if (r.found === 0) foundNothing += 1;
     } catch (e) {
       failed++;
       setUploadStatus(e.message || 'a photo could not be processed', true);
@@ -336,10 +339,11 @@ photoInput.addEventListener('change', async () => {
   }
 
   const parts = [];
-  if (added) parts.push(`${added} added`);
+  if (added) parts.push(`${added} item${added === 1 ? '' : 's'} added`);
   if (skipped) parts.push(`${skipped} already in wardrobe`);
-  if (failed) parts.push(`${failed} failed`);
-  if (overflow) parts.push(`${overflow} skipped (${MAX_ITEMS}-item cap)`);
+  if (foundNothing) parts.push(`${foundNothing} with no clear garment`);
+  if (failed) parts.push(`${failed} photo${failed === 1 ? '' : 's'} failed`);
+  if (hitCap) parts.push(`stopped at the ${MAX_ITEMS}-item cap`);
   const costNote = extractionCostTotal ? ` Extraction cost so far: $${extractionCostTotal.toFixed(5)}.` : '';
   setUploadStatus((parts.join(', ') || 'nothing added') + '.' + costNote, failed > 0 && added === 0);
 
@@ -383,7 +387,7 @@ function renderFill(fill) {
       </div>
     </div>`;
   }
-  return `<div class="not-filled">Gap: "${esc(fill.gap)}" &mdash; not filled (${esc(fill.reason)})</div>`;
+  return `<div class="not-filled">Missing / to improve: "${esc(fill.gap)}" &mdash; ${esc(fill.reason)}</div>`;
 }
 
 function renderOutfit(outfit) {

@@ -47,7 +47,7 @@ Full detail in context-full.md's session 6 log. Short version so it is not undon
 
 ## Known scope limitations to carry into the README (7E), document honestly, do not "fix" quietly
 - The shopping "link" is a Google Shopping page, not a direct retailer URL. Serper does not provide a direct-merchant link on the free route.
-- MAX_SEARCHES_PER_REQUEST (dropping to 2 in 7C) means a heavily-gapped wardrobe can exhaust the live-search budget in the first ranked outfit. Cost-engineering material, not a bug.
+- MAX_SEARCHES_PER_REQUEST is now 2 (lowered from 3, session 7). A heavily-gapped wardrobe can exhaust the live-search budget in the first ranked outfit. Cost-engineering material, not a bug.
 - Body type / age / measurements influence is AI-inferred (soft, in the prompt), not a deterministic guarantee like the budget or avoid-list filters. State this plainly.
 - Saved outfits are localStorage only: per-device, vanish if browser data is cleared. Accounts + database are v2.
 - The single-user-costume defect and the husband second-user test: log it as a real defect found in genuine second-user use.
