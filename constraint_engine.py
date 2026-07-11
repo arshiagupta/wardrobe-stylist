@@ -87,6 +87,25 @@ def profile_reasons(item, profile):
         if _norm(tag) in blocked_tags:
             reasons.append(f"blocked_style_tag:{tag}")
 
+    # Free-text avoid list (7B): the user's own "things I never want" typed in the
+    # profile. Deterministic substring match across every descriptive field, so a
+    # term like "neon", "crop top" or "floral" is caught wherever it appears. This
+    # is a hard guarantee, the same discipline as the blocked_* lists. Keep terms
+    # specific: a broad word like "top" will exclude every top, by design.
+    for term in profile.get("avoid_terms", []):
+        nt = _norm(term)
+        if not nt:
+            continue
+        fields = [item.get("display_name"), item.get("article_type"), item.get("subcategory"),
+                  item.get("colour_primary"), item.get("colour_secondary"),
+                  item.get("pattern"), item.get("material")]
+        fields.extend(item.get("style_tags") or [])
+        for f in fields:
+            nf = _norm(f)
+            if nf and nt in nf:
+                reasons.append(f"avoid:{term}")
+                break
+
     return reasons
 
 

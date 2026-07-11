@@ -67,6 +67,12 @@
                color: var(--muted); cursor: pointer; text-align: center; }
   .thumb .review-dot { color: var(--warn); font-size: 0.62rem; }
 
+  /* profile */
+  .pgrid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
+  .pgrid .full { grid-column: 1 / -1; }
+  .opt { font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+  .psaved { font-size: 0.8rem; color: var(--muted); margin-top: 10px; min-height: 1em; }
+
   #status { margin: 16px 0; color: var(--muted); font-size: 0.9rem; }
   #error { margin: 16px 0; color: #a12b2b; font-size: 0.9rem; display: none; }
 
@@ -131,7 +137,64 @@
     <div class="thumbs" id="thumbs"></div>
   </div>
 
-  <!-- 2. styling request -->
+  <!-- 2. profile -->
+  <div class="card">
+    <h2>Your profile <span class="opt">(optional, sharpens suggestions)</span></h2>
+    <p class="hint">Kept only in this browser. Your avoid-list is a hard filter (those items never appear). Everything else is soft guidance for the stylist. Style presentation steers what new items get searched for, it never hides clothes you uploaded.</p>
+    <div class="pgrid">
+      <div>
+        <label for="pGender">Style presentation</label>
+        <select id="pGender">
+          <option value="">Neutral / mixed</option>
+          <option value="womenswear">Women's</option>
+          <option value="menswear">Men's</option>
+        </select>
+      </div>
+      <div>
+        <label for="pAge">Age</label>
+        <input id="pAge" type="number" min="0" max="120" step="1" placeholder="e.g. 29">
+      </div>
+      <div>
+        <label for="pBody">Body type</label>
+        <select id="pBody">
+          <option value="">Not sure / prefer measurements</option>
+          <option value="pear">Pear</option>
+          <option value="apple">Apple / round</option>
+          <option value="hourglass">Hourglass</option>
+          <option value="rectangle">Rectangle</option>
+          <option value="inverted triangle">Inverted triangle</option>
+          <option value="athletic">Athletic</option>
+        </select>
+      </div>
+      <div>
+        <label for="pHeight">Height (optional)</label>
+        <input id="pHeight" placeholder="e.g. 5'6&quot; or 168cm">
+      </div>
+      <div>
+        <label for="pBust">Bust / chest (optional)</label>
+        <input id="pBust" placeholder="e.g. 34 or 86cm">
+      </div>
+      <div>
+        <label for="pWaist">Waist (optional)</label>
+        <input id="pWaist" placeholder="e.g. 28 or 71cm">
+      </div>
+      <div>
+        <label for="pHip">Hip (optional)</label>
+        <input id="pHip" placeholder="e.g. 38 or 96cm">
+      </div>
+      <div class="full">
+        <label for="pLikes">Styles you like</label>
+        <input id="pLikes" placeholder="e.g. minimal, tailored, earthy tones">
+      </div>
+      <div class="full">
+        <label for="pAvoid">Avoid these (comma separated, hard filter)</label>
+        <input id="pAvoid" placeholder="e.g. crop top, neon, mini skirt">
+      </div>
+    </div>
+    <div id="profileStatus" class="psaved"></div>
+  </div>
+
+  <!-- 3. styling request -->
   <div class="card">
     <h2>Style me</h2>
     <p class="hint">Tell the stylist the occasion. Vibe, budget and season are optional.</p>
@@ -360,6 +423,64 @@ clearLink.addEventListener('click', () => {
   setUploadStatus('');
 });
 
+// ---- profile (7B): kept in this browser, sent with each styling request ----
+const PROFILE_KEY = 'ws_profile_v1';
+const pEls = {
+  gender: document.getElementById('pGender'),
+  age: document.getElementById('pAge'),
+  body_type: document.getElementById('pBody'),
+  height: document.getElementById('pHeight'),
+  bust: document.getElementById('pBust'),
+  waist: document.getElementById('pWaist'),
+  hip: document.getElementById('pHip'),
+  likes: document.getElementById('pLikes'),
+  avoid: document.getElementById('pAvoid'),
+};
+const profileStatus = document.getElementById('profileStatus');
+
+function loadProfile() {
+  let p = {};
+  try { p = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {}; } catch (e) { p = {}; }
+  const m = p.measurements || {};
+  pEls.gender.value = p.gender || '';
+  pEls.age.value = (p.age !== null && p.age !== undefined) ? p.age : '';
+  pEls.body_type.value = p.body_type || '';
+  pEls.height.value = m.height || '';
+  pEls.bust.value = m.bust || '';
+  pEls.waist.value = m.waist || '';
+  pEls.hip.value = m.hip || '';
+  pEls.likes.value = p.likes || '';
+  pEls.avoid.value = p.avoid_raw || '';
+}
+
+function currentProfile() {
+  const avoidRaw = pEls.avoid.value.trim();
+  const avoidTerms = avoidRaw.split(',').map((s) => s.trim()).filter(Boolean);
+  const ageNum = parseInt(pEls.age.value, 10);
+  return {
+    gender: pEls.gender.value || '',
+    age: Number.isFinite(ageNum) ? ageNum : null,
+    body_type: pEls.body_type.value || '',
+    measurements: {
+      height: pEls.height.value.trim(),
+      bust: pEls.bust.value.trim(),
+      waist: pEls.waist.value.trim(),
+      hip: pEls.hip.value.trim(),
+    },
+    likes: pEls.likes.value.trim(),
+    avoid_raw: avoidRaw,
+    avoid_terms: avoidTerms,
+    exclude_needs_review: false,  // keep flagged items visible, marked
+  };
+}
+
+function saveProfile() {
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(currentProfile())); } catch (e) { /* quota */ }
+  profileStatus.textContent = 'Profile saved in this browser.';
+}
+
+Object.values(pEls).forEach((el) => el.addEventListener('change', saveProfile));
+
 // ---- results rendering ----
 function renderItemCard(item) {
   const src = wardrobe.thumbs[item.id];
@@ -418,6 +539,7 @@ form.addEventListener('submit', async (e) => {
     budget: document.getElementById('budget').value || null,
     season: document.getElementById('season').value || null,
     wardrobe: wardrobe.items,
+    profile: currentProfile(),
   };
 
   submitBtn.disabled = true;
@@ -462,6 +584,7 @@ form.addEventListener('submit', async (e) => {
 // init
 loadWardrobe();
 renderWardrobe();
+loadProfile();
 </script>
 </body>
 </html>

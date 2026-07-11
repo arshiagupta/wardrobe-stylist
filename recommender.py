@@ -138,13 +138,28 @@ def compact_item(it):
     }
 
 
-def build_prompt(occasion, vibe, budget, formality, season, items, gaps):
+def build_prompt(occasion, vibe, budget, formality, season, items, gaps, profile=None):
     items_json = json.dumps([compact_item(i) for i in items], ensure_ascii=False, indent=2)
     gaps_text = "; ".join(gaps) if gaps else "none - a full outfit can be assembled from the items below"
     formality_text = formality or "not determined from the occasion text, consider all formality levels"
     season_text = season or "any"
     budget_available = budget is not None and budget > 0
     budget_text = f"£{budget:.0f}" if budget_available else "no budget set"
+
+    # Wearer profile (7B): soft styling context only. gender steers language and
+    # new-buy wording, never filters owned items (that stays out of the hard filter
+    # by design). age/body/likes nudge silhouette and taste in the reasoning.
+    profile = profile or {}
+    gender = (profile.get("gender") or "").strip().lower()
+    gender_text = {"womenswear": "women's / feminine", "menswear": "men's / masculine"}.get(
+        gender, "neutral / mixed")
+    age = profile.get("age")
+    age_text = str(age) if age not in (None, "", 0) else "not given"
+    meas = profile.get("measurements") or {}
+    body_bits = [b for b in [(profile.get("body_type") or "").strip()]
+                 + [f"{k} {v}" for k, v in meas.items() if v] if b]
+    body_text = ", ".join(body_bits) if body_bits else "not given"
+    likes_text = (profile.get("likes") or "").strip() or "not given"
 
     if budget_available:
         clash_rule = (
@@ -167,8 +182,15 @@ def build_prompt(occasion, vibe, budget, formality, season, items, gaps):
     return f"""You are an expert wardrobe stylist. Occasion: "{occasion}" (mapped formality: {formality_text}).
 Season preference: {season_text}. Requested vibe/style: "{vibe or 'not specified'}". Budget for any new buy: {budget_text}.
 
+Wearer profile (soft styling context: tailor pairings to it and mention it in the reason
+where it genuinely helps, but NEVER exclude an item they already own because of gender):
+- Style presentation: {gender_text}
+- Age: {age_text}
+- Body type / measurements: {body_text}
+- Likes / preferred style: {likes_text}
+
 Below is the full list of wardrobe items that ALREADY PASSED deterministic hard
-filtering in code (blockers and formality/season/gender all already applied).
+filtering in code (the avoid-list and formality/season all already applied).
 Only reference items from this list, by id. Never invent an id or an item.
 
 {items_json}
@@ -296,7 +318,7 @@ def get_outfits(occasion, vibe, budget, season, wardrobe=None, profile=None):
     if not api_key:
         sys.exit("GEMINI_API_KEY is not set.")
 
-    prompt = build_prompt(occasion, vibe, budget, formality, season, passing, gaps)
+    prompt = build_prompt(occasion, vibe, budget, formality, season, passing, gaps, profile)
     client = genai.Client(api_key=api_key)
     resp = call_model(client, types, prompt)
 

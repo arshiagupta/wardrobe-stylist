@@ -122,14 +122,39 @@ def run():
     passing, excluded = filter_wardrobe(items, empty_profile, request={"season": "winter"})
     check("15 all-season item matches any requested season", len(passing) == 1)
 
-    # 16. integration check: the real extracted wardrobe plus the real profile.json,
-    # with the "no crop tops" blocker, actually runs against Phase 1's real output
+    # 16. avoid_terms (7B): free-text avoid matches by substring and excludes
+    profile = {**empty_profile, "avoid_terms": ["crop top"]}
+    items = [item(display_name="black crop top", article_type="crop top")]
+    passing, excluded = filter_wardrobe(items, profile)
+    check("16 avoid_terms matches and excludes",
+          len(excluded) == 1 and "avoid:crop top" in excluded[0]["reasons"])
+
+    # 17. avoid_terms matches a colour word, leaves unrelated items alone
+    profile = {**empty_profile, "avoid_terms": ["neon"]}
+    keep = item(colour_primary="blue", display_name="blue jeans")
+    drop = item(colour_primary="neon green", display_name="neon top")
+    passing, excluded = filter_wardrobe([keep, drop], profile)
+    check("17 avoid_terms colour match, others pass", len(passing) == 1 and len(excluded) == 1)
+
+    # 18. avoid_terms matches inside style_tags
+    profile = {**empty_profile, "avoid_terms": ["boho"]}
+    items = [item(style_tags=["boho", "relaxed"])]
+    passing, excluded = filter_wardrobe(items, profile)
+    check("18 avoid_terms matches a style tag", len(excluded) == 1)
+
+    # 19. no avoid_terms (missing key) changes nothing
+    items = [item()]
+    passing, excluded = filter_wardrobe(items, empty_profile)
+    check("19 no avoid_terms leaves item alone", len(passing) == 1)
+
+    # 20. integration check: the real extracted wardrobe plus the real profile.json
+    # actually runs against Phase 1's real output
     real_items = load_wardrobe()
     real_profile = load_profile()
     passing, excluded = filter_wardrobe(real_items, real_profile)
     crop_top_hits = [e for e in excluded
                      if any(r.startswith("blocked_article_type") for r in e["reasons"])]
-    check("16 real wardrobe.json loads and runs without error", len(real_items) > 0)
+    check("20 real wardrobe.json loads and runs without error", len(real_items) > 0)
     print(f"    (info) real wardrobe: {len(passing)} pass, {len(excluded)} excluded, "
           f"{len(crop_top_hits)} caught by the crop-top blocker")
 

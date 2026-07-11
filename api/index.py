@@ -120,8 +120,16 @@ def style():
     if not isinstance(wardrobe, list):
         return jsonify({"error": "wardrobe must be a list of items"}), 400
 
+    # Profile (7B) comes from the caller's browser too. None is fine (falls back to
+    # the neutral server profile). Gender in it never filters the user's own items,
+    # it only steers new-buy searches and styling language.
+    profile = body.get("profile")
+    if profile is not None and not isinstance(profile, dict):
+        return jsonify({"error": "profile must be an object"}), 400
+
     try:
-        outcome = gap_fill.fill_gaps_for_request(occasion, vibe, budget, season, wardrobe=wardrobe)
+        outcome = gap_fill.fill_gaps_for_request(
+            occasion, vibe, budget, season, wardrobe=wardrobe, profile=profile)
     except SystemExit as e:
         # get_outfits()/fill_gaps_for_request() call sys.exit on a missing API
         # key. Translate that into a proper error response, not a hard crash.

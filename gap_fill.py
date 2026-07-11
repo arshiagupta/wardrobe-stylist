@@ -59,6 +59,19 @@ def build_query(gap_text, gender_prefix=GENDER_PREFIX):
     return g
 
 
+def gender_to_prefix(gender):
+    """Map a stated gender preference to a Serper query prefix (7B). Neutral,
+    mixed or unknown -> no prefix, so new-buy searches span genders. Gender NEVER
+    filters the user's own uploaded items, it only steers what NEW products are
+    searched for and the styling language."""
+    g = (gender or "").strip().lower()
+    if g in ("womenswear", "women", "women's", "female", "woman", "feminine"):
+        return "women's"
+    if g in ("menswear", "men", "men's", "male", "man", "masculine"):
+        return "men's"
+    return ""
+
+
 def is_valid_position(position, candidates):
     return isinstance(position, int) and 0 <= position < len(candidates)
 
@@ -216,13 +229,20 @@ def fill_gaps_for_request(occasion, vibe, budget, season, wardrobe=None, profile
     gap_fill_cost = 0.0
     items_by_id = outcome["items_by_id"]
 
+    # Gender steers only the NEW-BUY search wording. profile None (CLI) keeps the
+    # old women's default; the web always passes a profile, whose neutral/mixed
+    # value resolves to no prefix.
+    gender_prefix = GENDER_PREFIX
+    if profile is not None:
+        gender_prefix = gender_to_prefix(profile.get("gender"))
+
     for outfit in outcome["outfits"]:
         gaps = outfit.get("gaps") or []
         filled = []
         other_item_names = [items_by_id[i]["display_name"] for i in outfit["item_ids"] if i in items_by_id]
 
         for gap_text in gaps:
-            query = build_query(gap_text)
+            query = build_query(gap_text, gender_prefix)
             try:
                 search_result = search_shopping(query, max_budget=budget, search_count=search_count)
             except SearchBudgetExceeded as e:

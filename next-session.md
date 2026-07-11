@@ -22,13 +22,14 @@ Phases 1 through 5 are complete and unchanged. The app is live: **https://wardro
 | 7D | Grouped alternates: same bottom + footwear, multiple tops, one card. Prompt + schema + rendering | 7C rendering | ~2-3 hours |
 | 7E | README, non-negotiable, last but never dropped | Everything | Writing, not debugging |
 
-## 7A is DONE (session 7). Next is 7B.
-7A was built, billed-tested end to end ($0.002319) and shipped. The app is now multi-user: visitors upload their own photos, extraction runs per photo via POST /api/extract, the wardrobe lives in their browser localStorage, and /api/style reads that wardrobe from the request body. Privacy removals done and pushed: wardrobe.json untracked (kept local), profile.json neutralised, placeholder SVGs removed. Full detail in context-full.md's session 7 execution note.
-Still open on 7A: a real photo has not been driven through the browser upload UI end to end (backend proven, page renders). Optional billed in-browser UI test can be done anytime.
+## 7A and 7B are DONE (session 7). Next is 7C.
+Shipped and live: 7A (multi-user upload, wardrobe in browser localStorage, /api/style reads it from the request body), a quality pass (multi-item extraction, styling rubric, budget-gated buys: budget 0 = words only, budget > 0 = shop within budget, search cap 3 -> 2), and 7B (user-profile form: avoid-list as a hard filter, gender steering new-buy searches + ranking language, age/body/likes as soft prompt context). Privacy removals done and pushed (wardrobe.json untracked, profile.json neutralised, placeholder SVGs removed). The builder confirmed 7A works in her own browser. Full detail in context-full.md's session 7 execution notes. 60/60 tests pass. Combined billed spend for session 7 to date roughly $0.008.
+
+Remaining phases: 7C (UI revamp: tabs, landing/story section, wardrobe gallery, product-image click-to-expand, saved-outfits tab; the search-cap-to-2 part of 7C is already done), 7D (grouped alternates), 7E (README, mandatory, last).
 
 ## Exact resume point (for Claude Code, next session)
 1. Read CLAUDE.md, context-full.md, this file and session-brief-v1.1.md fully before acting.
-2. Build 7B next: the user-profile form (gender/style presentation with a neutral option, age, body type or measurements, likes, avoid list), stored in localStorage and sent with each styling request. Wiring, per the session 7 decision log: avoid-list into the deterministic constraint engine (profile is already a parameter to get_outfits now, 7A did that plumbing), gender into shopping query construction AND the ranking prompt, age/body/measurements into the ranking prompt only. Explanations should reference them. Document honestly that body-type influence is AI-inferred, not a hard guarantee.
+2. Build 7C next: the UI revamp (tabs, a landing/story section explaining the limited-wardrobe problem, a wardrobe gallery view, product-image click-to-expand, a saved-outfits tab backed by localStorage). The search-cap-to-2 piece listed under 7C is already done (session 7). This is builder-time only, zero API cost, but confirm the look with her as you go.
 3. Any billed test run needs the builder's yes and an estimated cost first.
 4. Update context-full.md and next-session.md before the session ends.
 
