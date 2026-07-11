@@ -22,14 +22,14 @@ Phases 1 through 5 are complete and unchanged. The app is live: **https://wardro
 | 7D | Grouped alternates: same bottom + footwear, multiple tops, one card. Prompt + schema + rendering | 7C rendering | ~2-3 hours |
 | 7E | README, non-negotiable, last but never dropped | Everything | Writing, not debugging |
 
-## 7A and 7B are DONE (session 7). Next is 7C.
+## 7A, 7B, 7C built (session 7). 7C is live pending the builder's design refinement. Next is 7D.
 Shipped and live: 7A (multi-user upload, wardrobe in browser localStorage, /api/style reads it from the request body), a quality pass (multi-item extraction, styling rubric, budget-gated buys: budget 0 = words only, budget > 0 = shop within budget, search cap 3 -> 2), and 7B (user-profile form: avoid-list as a hard filter, gender steering new-buy searches + ranking language, age/body/likes as soft prompt context). Privacy removals done and pushed (wardrobe.json untracked, profile.json neutralised, placeholder SVGs removed). The builder confirmed 7A works in her own browser. Full detail in context-full.md's session 7 execution notes. 60/60 tests pass. Combined billed spend for session 7 to date roughly $0.008.
 
 Remaining phases: 7C (UI revamp: tabs, landing/story section, wardrobe gallery, product-image click-to-expand, saved-outfits tab; the search-cap-to-2 part of 7C is already done), 7D (grouped alternates), 7E (README, mandatory, last).
 
 ## Exact resume point (for Claude Code, next session)
 1. Read CLAUDE.md, context-full.md, this file and session-brief-v1.1.md fully before acting.
-2. Build 7C next: the UI revamp (tabs, a landing/story section explaining the limited-wardrobe problem, a wardrobe gallery view, product-image click-to-expand, a saved-outfits tab backed by localStorage). The search-cap-to-2 piece listed under 7C is already done (session 7). This is builder-time only, zero API cost, but confirm the look with her as you go.
+2. First check whether the builder has design-refinement feedback on 7C (the revamped UI is live: tabbed app, clean-minimal + indigo accent, Home/My wardrobe/Style me/Saved). Apply any tweaks she asks for. Then build 7D: grouped alternates (same bottom + footwear, multiple tops shown as options inside one outfit card, instead of near-duplicate separate outfits). New AI prompt + output schema + rendering. Then 7E (README, mandatory, last). Note: the browser screenshot tool was down all of session 7, so visual checks depended on the builder viewing the live deploy.
 3. Any billed test run needs the builder's yes and an estimated cost first.
 4. Update context-full.md and next-session.md before the session ends.
 

@@ -6,401 +6,401 @@
 <title>AI wardrobe stylist</title>
 <style>
   :root {
-    --bg: #faf8f5; --card: #ffffff; --ink: #1c1c1c; --muted: #6b6b6b;
-    --line: #e4e0da; --accent: #8a4b3b; --accent-ink: #ffffff; --warn: #a3701f;
+    --bg:#ffffff; --surface:#f6f6f9; --ink:#111114; --ink-soft:#3f3f46; --muted:#6b7280;
+    --line:#e7e7ee; --accent:#4f46e5; --accent-h:#4338ca; --accent-soft:#eef1ff;
+    --radius:14px; --maxw:980px;
   }
-  * { box-sizing: border-box; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
   body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font-family: -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
-    line-height: 1.45;
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5; -webkit-font-smoothing:antialiased;
   }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
-  header h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  header p { color: var(--muted); margin: 0 0 24px; font-size: 0.95rem; }
+  a { color:var(--accent); text-decoration:none; }
+  h1,h2,h3 { letter-spacing:-.02em; }
 
-  .card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 20px; margin-bottom: 18px;
-  }
-  .card h2 { font-size: 1.05rem; margin: 0 0 4px; }
-  .card .hint { color: var(--muted); font-size: 0.85rem; margin: 0 0 14px; }
+  /* top bar */
+  .topbar { position:sticky; top:0; z-index:20; background:rgba(255,255,255,.86); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .topbar .inner { display:flex; align-items:center; justify-content:space-between; gap:14px; height:60px; max-width:var(--maxw); margin:0 auto; padding:0 20px; }
+  .brand { font-weight:700; font-size:1.02rem; display:flex; align-items:center; gap:9px; }
+  .brand .dot { width:11px; height:11px; border-radius:50%; background:var(--accent); }
+  .nav { display:flex; gap:4px; flex-wrap:wrap; }
+  .nav button { border:none; background:transparent; color:var(--muted); font:inherit; font-size:.9rem; font-weight:500; padding:8px 12px; border-radius:9px; cursor:pointer; }
+  .nav button:hover { color:var(--ink); background:var(--surface); }
+  .nav button.active { color:var(--accent); background:var(--accent-soft); }
+  .count { display:inline-block; min-width:18px; margin-left:6px; padding:0 6px; border-radius:9px; background:var(--accent); color:#fff; font-size:.72rem; line-height:18px; text-align:center; }
 
-  form { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
-  form .full { grid-column: 1 / -1; }
-  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
-  input, select {
-    width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
-    font-size: 0.95rem; background: #fff; color: var(--ink);
-  }
-  button {
-    padding: 11px; border: none; border-radius: 8px;
-    background: var(--accent); color: var(--accent-ink); font-size: 1rem;
-    cursor: pointer; font-weight: 600;
-  }
-  button.full { grid-column: 1 / -1; width: 100%; }
-  button:disabled { opacity: 0.5; cursor: default; }
+  .container { max-width:var(--maxw); margin:0 auto; padding:0 20px; }
+  .tab-panel { padding:32px 0 90px; }
+  .hidden { display:none; }
+
+  /* hero */
+  .hero { padding:36px 0 6px; }
+  .eyebrow { font-size:.76rem; text-transform:uppercase; letter-spacing:.09em; color:var(--accent); font-weight:700; margin:0 0 12px; }
+  .hero h1 { font-size:2.4rem; line-height:1.08; margin:0 0 14px; max-width:17ch; }
+  .hero p.lead { font-size:1.12rem; color:var(--muted); max-width:56ch; margin:0 0 24px; }
+
+  .btn { display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; font:inherit; font-weight:600; font-size:.97rem; padding:12px 20px; border-radius:11px; background:var(--accent); color:#fff; }
+  .btn:hover { background:var(--accent-h); }
+  .btn.secondary { background:var(--surface); color:var(--ink); border:1px solid var(--line); }
+  .btn:disabled { opacity:.5; cursor:default; }
+
+  h2.sec { font-size:1.4rem; margin:0 0 6px; }
+  .sub { color:var(--muted); margin:0 0 22px; }
+
+  .steps { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:14px; }
+  .step { background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); padding:20px; }
+  .step .n { width:30px; height:30px; border-radius:8px; background:var(--accent-soft); color:var(--accent); font-weight:700; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+  .step h3 { margin:0 0 6px; font-size:1rem; }
+  .step p { margin:0; color:var(--muted); font-size:.9rem; }
+  .divider { height:1px; background:var(--line); margin:38px 0; border:0; }
+
+  /* cards + forms */
+  .card { background:var(--bg); border:1px solid var(--line); border-radius:var(--radius); padding:22px; margin-bottom:18px; }
+  .card > h2 { font-size:1.15rem; margin:0 0 4px; }
+  .card .hint { color:var(--muted); font-size:.88rem; margin:0 0 16px; }
+  details.card > summary { list-style:none; cursor:pointer; font-weight:600; font-size:1.05rem; display:flex; align-items:center; gap:10px; }
+  details.card > summary::-webkit-details-marker { display:none; }
+  details.card > summary::after { content:"\25be"; margin-left:auto; color:var(--muted); font-weight:400; }
+  details.card[open] > summary::after { content:"\25b4"; }
+  .field label, label { display:block; font-size:.82rem; color:var(--muted); margin-bottom:6px; font-weight:500; }
+  input, select { width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:10px; font:inherit; font-size:.95rem; background:#fff; color:var(--ink); }
+  input:focus, select:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+  .grid2 { display:grid; gap:14px; grid-template-columns:1fr 1fr; }
+  .grid2 .full { grid-column:1/-1; }
+  .pgrid { display:grid; gap:14px; grid-template-columns:1fr 1fr; margin-top:16px; }
+  .pgrid .full { grid-column:1/-1; }
+  .psaved { font-size:.8rem; color:var(--muted); margin-top:10px; min-height:1em; }
 
   /* upload */
-  .upload-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-  .upload-btn {
-    display: inline-block; padding: 10px 16px; border-radius: 8px;
-    background: var(--accent); color: var(--accent-ink); font-weight: 600;
-    font-size: 0.95rem; cursor: pointer;
+  .upload-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .upload-btn { display:inline-flex; align-items:center; gap:8px; padding:11px 18px; border-radius:11px; background:var(--accent); color:#fff; font-weight:600; font-size:.95rem; cursor:pointer; }
+  .upload-btn.disabled { opacity:.5; cursor:default; }
+  #photoInput { display:none; }
+  .muted-s { font-size:.85rem; color:var(--muted); }
+  .link-btn { background:none; border:none; color:var(--accent); cursor:pointer; font:inherit; font-size:.85rem; text-decoration:underline; padding:0; }
+  #uploadStatus { margin-top:12px; font-size:.85rem; color:var(--muted); min-height:1.1em; }
+  #uploadStatus.err { color:#b91c1c; }
+
+  /* gallery */
+  .gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:14px; margin-top:18px; }
+  .gcard { position:relative; }
+  .gcard img { width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:12px; border:1px solid var(--line); display:block; }
+  .gcard .cap { font-size:.78rem; color:var(--ink-soft); margin-top:7px; line-height:1.25; }
+  .gcard .x { position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:50%; background:rgba(255,255,255,.94); border:1px solid var(--line); color:var(--muted); cursor:pointer; line-height:22px; text-align:center; font-size:14px; }
+  .rev { font-size:.7rem; color:#b45309; }
+  .empty { text-align:center; color:var(--muted); padding:38px 12px; border:1px dashed var(--line); border-radius:var(--radius); }
+
+  /* results / outfits */
+  .gaps-box { margin:0 0 18px; padding:12px 14px; border-radius:10px; background:var(--accent-soft); border:1px solid #dcd8fb; font-size:.88rem; color:#3730a3; }
+  .outfit { border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:16px; }
+  .outfit-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:8px; }
+  .rank { font-weight:700; font-size:1.05rem; }
+  .reason { color:var(--muted); font-size:.92rem; margin:0 0 16px; }
+  .items-row { display:flex; gap:12px; flex-wrap:wrap; }
+  .pcard { width:118px; }
+  .pcard img { width:118px; height:158px; object-fit:cover; border-radius:11px; border:1px solid var(--line); }
+  .pcard .ph { width:118px; height:158px; border-radius:11px; border:1px dashed var(--line); display:flex; align-items:center; justify-content:center; text-align:center; color:var(--muted); font-size:.72rem; padding:8px; background:var(--surface); }
+  .pcard .nm { font-size:.76rem; color:var(--ink-soft); margin-top:6px; }
+
+  .buys { margin-top:16px; border-top:1px solid var(--line); padding-top:14px; display:grid; gap:10px; }
+  details.buy { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  details.buy summary { list-style:none; cursor:pointer; display:flex; gap:12px; align-items:center; padding:10px 12px; }
+  details.buy summary::-webkit-details-marker { display:none; }
+  details.buy summary img { width:52px; height:66px; object-fit:cover; border-radius:8px; border:1px solid var(--line); flex:none; }
+  .buy .bt { font-weight:600; font-size:.9rem; }
+  .buy .bm { font-size:.82rem; color:var(--muted); }
+  .buy .chev { margin-left:auto; color:var(--muted); }
+  details.buy[open] .chev { transform:rotate(180deg); }
+  .buy .body { padding:2px 12px 13px; font-size:.86rem; color:var(--ink-soft); }
+  .buy .body a { font-weight:600; }
+  .note { font-size:.86rem; color:var(--muted); border:1px dashed var(--line); border-radius:10px; padding:10px 12px; }
+
+  .save-btn { border:1px solid var(--line); background:var(--bg); color:var(--ink); border-radius:9px; padding:7px 13px; font:inherit; font-size:.82rem; font-weight:600; cursor:pointer; white-space:nowrap; }
+  .save-btn:hover { background:var(--surface); }
+  .save-btn.saved { background:var(--accent-soft); color:var(--accent); border-color:var(--accent-soft); }
+
+  #status { color:var(--muted); font-size:.9rem; margin:10px 0; }
+  #error { color:#b91c1c; font-size:.9rem; margin:10px 0; display:none; }
+  .cost-strip { margin-top:18px; padding:12px 14px; border-radius:10px; background:var(--surface); font-size:.82rem; color:var(--muted); }
+  .cost-strip strong { color:var(--ink); }
+  footer { border-top:1px solid var(--line); padding:22px 0 40px; font-size:.78rem; color:var(--muted); text-align:center; }
+
+  @media (max-width:640px) {
+    .grid2, .steps, .pgrid { grid-template-columns:1fr; }
+    .hero h1 { font-size:1.95rem; }
+    .topbar .inner { height:auto; padding:10px 20px; flex-direction:column; align-items:flex-start; gap:8px; }
   }
-  .upload-btn.disabled { opacity: 0.5; cursor: default; }
-  #photoInput { display: none; }
-  .upload-count { font-size: 0.85rem; color: var(--muted); }
-  .clear-link { font-size: 0.82rem; color: var(--accent); cursor: pointer; text-decoration: underline; }
-
-  #uploadStatus { margin: 12px 0 0; font-size: 0.85rem; color: var(--muted); min-height: 1.1em; }
-  #uploadStatus.err { color: #a12b2b; }
-
-  .thumbs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-  .thumb { width: 74px; text-align: center; position: relative; }
-  .thumb img { width: 74px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
-  .thumb .tname { font-size: 0.66rem; color: var(--muted); margin-top: 3px; line-height: 1.2;
-                  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
-                  -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .thumb .rm { position: absolute; top: -6px; right: -6px; background: #fff; border: 1px solid var(--line);
-               border-radius: 50%; width: 18px; height: 18px; line-height: 15px; font-size: 12px;
-               color: var(--muted); cursor: pointer; text-align: center; }
-  .thumb .review-dot { color: var(--warn); font-size: 0.62rem; }
-
-  /* profile */
-  .pgrid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
-  .pgrid .full { grid-column: 1 / -1; }
-  .opt { font-weight: 400; font-size: 0.8rem; color: var(--muted); }
-  .psaved { font-size: 0.8rem; color: var(--muted); margin-top: 10px; min-height: 1em; }
-
-  #status { margin: 16px 0; color: var(--muted); font-size: 0.9rem; }
-  #error { margin: 16px 0; color: #a12b2b; font-size: 0.9rem; display: none; }
-
-  .gaps-box {
-    margin: 20px 0; padding: 12px 14px; border-radius: 8px;
-    background: #fff7ec; border: 1px solid #ecd9b8; font-size: 0.88rem; color: var(--warn);
-  }
-
-  .outfit {
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 18px; margin-bottom: 18px;
-  }
-  .outfit h3 { margin: 0 0 6px; font-size: 1.05rem; }
-  .outfit .reason { color: var(--muted); font-size: 0.9rem; margin: 0 0 14px; }
-
-  .items-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
-  .item-card { width: 110px; text-align: center; }
-  .item-card img { width: 110px; height: 146px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
-  .item-card .ph { width: 110px; height: 146px; border-radius: 8px; border: 1px dashed var(--line);
-                   display: flex; align-items: center; justify-content: center; color: var(--muted);
-                   font-size: 0.7rem; padding: 6px; background: #f6f4f0; }
-  .item-card .name { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
-  .item-card .review-flag { font-size: 0.68rem; color: var(--warn); }
-
-  .fills { border-top: 1px dashed var(--line); padding-top: 12px; margin-top: 6px; }
-  .fill-card {
-    display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px;
-    font-size: 0.86rem;
-  }
-  .fill-card img { width: 64px; height: 84px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); }
-  .fill-card .fill-title { font-weight: 600; }
-  .fill-card .fill-meta { color: var(--muted); }
-  .fill-card a { color: var(--accent); }
-  .not-filled { font-size: 0.86rem; color: var(--muted); font-style: italic; }
-
-  .cost-strip {
-    margin-top: 22px; padding: 12px 14px; border-radius: 8px; background: #f1efe9;
-    font-size: 0.82rem; color: var(--muted);
-  }
-  .cost-strip strong { color: var(--ink); }
-  footer { margin-top: 40px; font-size: 0.78rem; color: var(--muted); text-align: center; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>AI wardrobe stylist</h1>
-    <p>Add photos of your own clothes. It suggests outfits from what you already own, and finds a real product for anything genuinely missing.</p>
-  </header>
-
-  <!-- 1. wardrobe upload -->
-  <div class="card">
-    <h2>Your wardrobe</h2>
-    <p class="hint">Photos are analysed once and kept only in this browser, on this device. They are never stored on our server. One clear garment per photo works best.</p>
-    <div class="upload-row">
-      <label class="upload-btn" id="uploadBtn" for="photoInput">Add clothing photos</label>
-      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" multiple>
-      <span class="upload-count" id="uploadCount">0 items</span>
-      <span class="clear-link" id="clearLink" style="display:none">clear wardrobe</span>
-    </div>
-    <div id="uploadStatus"></div>
-    <div class="thumbs" id="thumbs"></div>
+<div class="topbar">
+  <div class="inner">
+    <div class="brand"><span class="dot"></span> AI wardrobe stylist</div>
+    <nav class="nav">
+      <button data-tab="home" class="active">Home</button>
+      <button data-tab="wardrobe">My wardrobe <span class="count" id="navWardrobeCount" hidden>0</span></button>
+      <button data-tab="style">Style me</button>
+      <button data-tab="saved">Saved <span class="count" id="navSavedCount" hidden>0</span></button>
+    </nav>
   </div>
-
-  <!-- 2. profile -->
-  <div class="card">
-    <h2>Your profile <span class="opt">(optional, sharpens suggestions)</span></h2>
-    <p class="hint">Kept only in this browser. Your avoid-list is a hard filter (those items never appear). Everything else is soft guidance for the stylist. Style presentation steers what new items get searched for, it never hides clothes you uploaded.</p>
-    <div class="pgrid">
-      <div>
-        <label for="pGender">Style presentation</label>
-        <select id="pGender">
-          <option value="">Neutral / mixed</option>
-          <option value="womenswear">Women's</option>
-          <option value="menswear">Men's</option>
-        </select>
-      </div>
-      <div>
-        <label for="pAge">Age</label>
-        <input id="pAge" type="number" min="0" max="120" step="1" placeholder="e.g. 29">
-      </div>
-      <div>
-        <label for="pBody">Body type</label>
-        <select id="pBody">
-          <option value="">Not sure / prefer measurements</option>
-          <option value="pear">Pear</option>
-          <option value="apple">Apple / round</option>
-          <option value="hourglass">Hourglass</option>
-          <option value="rectangle">Rectangle</option>
-          <option value="inverted triangle">Inverted triangle</option>
-          <option value="athletic">Athletic</option>
-        </select>
-      </div>
-      <div>
-        <label for="pHeight">Height (optional)</label>
-        <input id="pHeight" placeholder="e.g. 5'6&quot; or 168cm">
-      </div>
-      <div>
-        <label for="pBust">Bust / chest (optional)</label>
-        <input id="pBust" placeholder="e.g. 34 or 86cm">
-      </div>
-      <div>
-        <label for="pWaist">Waist (optional)</label>
-        <input id="pWaist" placeholder="e.g. 28 or 71cm">
-      </div>
-      <div>
-        <label for="pHip">Hip (optional)</label>
-        <input id="pHip" placeholder="e.g. 38 or 96cm">
-      </div>
-      <div class="full">
-        <label for="pLikes">Styles you like</label>
-        <input id="pLikes" placeholder="e.g. minimal, tailored, earthy tones">
-      </div>
-      <div class="full">
-        <label for="pAvoid">Avoid these (comma separated, hard filter)</label>
-        <input id="pAvoid" placeholder="e.g. crop top, neon, mini skirt">
-      </div>
-    </div>
-    <div id="profileStatus" class="psaved"></div>
-  </div>
-
-  <!-- 3. styling request -->
-  <div class="card">
-    <h2>Style me</h2>
-    <p class="hint">Tell the stylist the occasion. Vibe, budget and season are optional.</p>
-    <form id="styleForm">
-      <div class="full">
-        <label for="occasion">Occasion</label>
-        <input id="occasion" required placeholder="e.g. work dinner, casual weekend, black tie gala">
-      </div>
-      <div class="full">
-        <label for="vibe">Vibe / style (optional)</label>
-        <input id="vibe" placeholder="e.g. minimal, a bit edgy">
-      </div>
-      <div>
-        <label for="budget">Budget for any gap-fill item, GBP (optional)</label>
-        <input id="budget" type="number" min="0" step="1" placeholder="e.g. 60">
-      </div>
-      <div>
-        <label for="season">Season (optional)</label>
-        <select id="season">
-          <option value="">Any</option>
-          <option value="summer">Summer</option>
-          <option value="winter">Winter</option>
-          <option value="all season">All season</option>
-          <option value="transitional">Transitional</option>
-        </select>
-      </div>
-      <button type="submit" class="full" id="submitBtn">Style me</button>
-    </form>
-  </div>
-
-  <div id="status"></div>
-  <div id="error"></div>
-  <div id="results"></div>
-
-  <footer>Portfolio demo. Your wardrobe stays in your own browser, never on the server. Gap-fill product links go to Google Shopping, not directly to the retailer.</footer>
 </div>
+
+<!-- HOME -->
+<section id="tab-home" class="tab-panel">
+  <div class="container">
+    <div class="hero">
+      <p class="eyebrow">Style from what you already own</p>
+      <h1>Your wardrobe, actually styled.</h1>
+      <p class="lead">Most people wear a fraction of what they own. This stylist looks at your real clothes first, builds outfits from them, and only suggests buying something when there is a genuine gap.</p>
+      <button class="btn" data-tab="wardrobe">Add your wardrobe &rarr;</button>
+    </div>
+
+    <hr class="divider">
+
+    <p class="eyebrow">How it works</p>
+    <h2 class="sec">Three steps</h2>
+    <p class="sub">Everything you upload stays in your own browser, never on our server.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>Add your clothes</h3>
+        <p>Snap or upload photos. Each is analysed once into its colour, type and style, then kept on your device.</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>Set your profile</h3>
+        <p>Optional. Style presentation, likes and an avoid-list sharpen the suggestions. Your avoid-list is a hard rule.</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>Get styled</h3>
+        <p>Tell it the occasion. It ranks real outfits from your wardrobe and, if you set a budget, finds one thing worth buying.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WARDROBE -->
+<section id="tab-wardrobe" class="tab-panel hidden">
+  <div class="container">
+    <h2 class="sec">My wardrobe</h2>
+    <p class="sub">Add photos of your own clothes. One clear garment per photo works best, and a full-length outfit photo is split into its separate pieces.</p>
+    <div class="card">
+      <div class="upload-row">
+        <label class="upload-btn" id="uploadBtn" for="photoInput">Add clothing photos</label>
+        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" multiple>
+        <span class="muted-s" id="uploadCount">0 items</span>
+        <button class="link-btn" id="clearLink" style="display:none">clear wardrobe</button>
+      </div>
+      <div id="uploadStatus"></div>
+    </div>
+    <div class="gallery" id="gallery"></div>
+  </div>
+</section>
+
+<!-- STYLE ME -->
+<section id="tab-style" class="tab-panel hidden">
+  <div class="container">
+    <h2 class="sec">Style me</h2>
+    <p class="sub">Tell the stylist the occasion. Vibe, budget and season are optional.</p>
+
+    <details class="card">
+      <summary>Your profile <span class="muted-s" style="font-weight:400">optional, sharpens suggestions</span></summary>
+      <p class="hint" style="margin-top:14px">Kept only in this browser. Your avoid-list is a hard filter (those items never appear). Everything else is soft guidance. Style presentation steers what new items are searched for, it never hides clothes you uploaded.</p>
+      <div class="pgrid">
+        <div><label for="pGender">Style presentation</label>
+          <select id="pGender">
+            <option value="">Neutral / mixed</option>
+            <option value="womenswear">Women's</option>
+            <option value="menswear">Men's</option>
+          </select></div>
+        <div><label for="pAge">Age</label><input id="pAge" type="number" min="0" max="120" step="1" placeholder="e.g. 29"></div>
+        <div><label for="pBody">Body type</label>
+          <select id="pBody">
+            <option value="">Not sure / prefer measurements</option>
+            <option value="pear">Pear</option>
+            <option value="apple">Apple / round</option>
+            <option value="hourglass">Hourglass</option>
+            <option value="rectangle">Rectangle</option>
+            <option value="inverted triangle">Inverted triangle</option>
+            <option value="athletic">Athletic</option>
+          </select></div>
+        <div><label for="pHeight">Height (optional)</label><input id="pHeight" placeholder="e.g. 5'6&quot; or 168cm"></div>
+        <div><label for="pBust">Bust / chest (optional)</label><input id="pBust" placeholder="e.g. 34 or 86cm"></div>
+        <div><label for="pWaist">Waist (optional)</label><input id="pWaist" placeholder="e.g. 28 or 71cm"></div>
+        <div><label for="pHip">Hip (optional)</label><input id="pHip" placeholder="e.g. 38 or 96cm"></div>
+        <div class="full"><label for="pLikes">Styles you like</label><input id="pLikes" placeholder="e.g. minimal, tailored, earthy tones"></div>
+        <div class="full"><label for="pAvoid">Avoid these (comma separated, hard filter)</label><input id="pAvoid" placeholder="e.g. crop top, neon, mini skirt"></div>
+      </div>
+      <div id="profileStatus" class="psaved"></div>
+    </details>
+
+    <div class="card">
+      <form id="styleForm" class="grid2">
+        <div class="full"><label for="occasion">Occasion</label>
+          <input id="occasion" required placeholder="e.g. work dinner, casual weekend, black tie gala"></div>
+        <div class="full"><label for="vibe">Vibe / style (optional)</label>
+          <input id="vibe" placeholder="e.g. minimal, a bit edgy"></div>
+        <div><label for="budget">Budget for any new buy, GBP (optional)</label>
+          <input id="budget" type="number" min="0" step="1" placeholder="e.g. 60"></div>
+        <div><label for="season">Season (optional)</label>
+          <select id="season">
+            <option value="">Any</option>
+            <option value="summer">Summer</option>
+            <option value="winter">Winter</option>
+            <option value="all season">All season</option>
+            <option value="transitional">Transitional</option>
+          </select></div>
+        <button type="submit" class="btn full" id="submitBtn" style="justify-content:center">Style me</button>
+      </form>
+    </div>
+
+    <div id="status"></div>
+    <div id="error"></div>
+    <div id="results"></div>
+  </div>
+</section>
+
+<!-- SAVED -->
+<section id="tab-saved" class="tab-panel hidden">
+  <div class="container">
+    <h2 class="sec">Saved outfits</h2>
+    <p class="sub">Outfits you saved, kept in this browser on this device.</p>
+    <div id="saved-list"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">Portfolio demo. Your wardrobe and profile stay in your own browser, never on the server. Gap-fill product links go to Google Shopping, not directly to the retailer.</div>
+</footer>
 
 <script>
 const STORAGE_KEY = 'ws_wardrobe_v1';
-const MAX_ITEMS = 20;          // per-device cap, also enforced honestly in the README as bypassable
-const UPLOAD_MAX_DIM = 1024;   // downscale before upload: plenty for attribute extraction, small payload
-const THUMB_MAX_DIM = 256;     // tiny thumbnail kept in localStorage for display
+const PROFILE_KEY = 'ws_profile_v1';
+const SAVED_KEY   = 'ws_saved_v1';
+const MAX_ITEMS = 20;
+const UPLOAD_MAX_DIM = 1024;
+const THUMB_MAX_DIM = 256;
 
-const form = document.getElementById('styleForm');
-const statusEl = document.getElementById('status');
-const errorEl = document.getElementById('error');
-const resultsEl = document.getElementById('results');
-const submitBtn = document.getElementById('submitBtn');
-const photoInput = document.getElementById('photoInput');
-const uploadBtn = document.getElementById('uploadBtn');
-const uploadCount = document.getElementById('uploadCount');
-const uploadStatus = document.getElementById('uploadStatus');
-const thumbsEl = document.getElementById('thumbs');
-const clearLink = document.getElementById('clearLink');
+const $ = (id) => document.getElementById(id);
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
 
-// wardrobe state: items = the JSON sent to /api/style, thumbs = id -> small dataURL for display
+/* ---------- tabs ---------- */
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
+  $('tab-' + name).classList.remove('hidden');
+  document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+function updateNavCount(el, n) { if (n > 0) { el.textContent = n; el.hidden = false; } else { el.hidden = true; } }
+
+/* ---------- wardrobe ---------- */
 let wardrobe = { items: [], thumbs: {} };
 let extractionCostTotal = 0;
+const galleryEl = $('gallery');
+const uploadCount = $('uploadCount');
+const uploadBtn = $('uploadBtn');
+const uploadStatus = $('uploadStatus');
+const clearLink = $('clearLink');
+const photoInput = $('photoInput');
 
 function loadWardrobe() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (parsed && Array.isArray(parsed.items)) {
-        wardrobe = { items: parsed.items, thumbs: parsed.thumbs || {} };
-      }
-    }
-  } catch (e) { /* corrupt storage, start clean */ }
+    const p = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (p && Array.isArray(p.items)) wardrobe = { items: p.items, thumbs: p.thumbs || {} };
+  } catch (e) { /* start clean */ }
 }
-
 function saveWardrobe() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobe));
-  } catch (e) {
-    setUploadStatus('Wardrobe is too large to save in this browser. Older items may not persist.', true);
-  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(wardrobe)); }
+  catch (e) { setUploadStatus('Wardrobe is too large to save in this browser.', true); }
 }
-
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : String(s);
-  return d.innerHTML;
-}
-
-function setUploadStatus(msg, isErr) {
-  uploadStatus.textContent = msg || '';
-  uploadStatus.className = isErr ? 'err' : '';
-}
+function setUploadStatus(msg, isErr) { uploadStatus.textContent = msg || ''; uploadStatus.className = isErr ? 'err' : ''; }
 
 function renderWardrobe() {
   const n = wardrobe.items.length;
   uploadCount.textContent = n === 1 ? '1 item' : `${n} items`;
   clearLink.style.display = n ? 'inline' : 'none';
+  updateNavCount($('navWardrobeCount'), n);
   const capped = n >= MAX_ITEMS;
   uploadBtn.classList.toggle('disabled', capped);
   photoInput.disabled = capped;
 
-  thumbsEl.innerHTML = wardrobe.items.map((it) => {
+  if (!n) { galleryEl.innerHTML = `<div class="empty">No items yet. Add photos of your clothes above.</div>`; return; }
+  galleryEl.innerHTML = wardrobe.items.map((it) => {
     const src = wardrobe.thumbs[it.id];
-    const img = src
-      ? `<img src="${esc(src)}" alt="${esc(it.display_name)}">`
-      : `<div class="thumb-ph"></div>`;
-    const review = it.needs_review ? `<div class="review-dot">needs review</div>` : '';
-    return `<div class="thumb" data-id="${esc(it.id)}">
-      <span class="rm" data-id="${esc(it.id)}" title="remove">&times;</span>
-      ${img}
-      <div class="tname">${esc(it.display_name)}</div>
-      ${review}
-    </div>`;
+    const img = src ? `<img src="${esc(src)}" alt="${esc(it.display_name)}">`
+                    : `<div class="pcard-ph"></div>`;
+    const rev = it.needs_review ? `<div class="rev">needs review</div>` : '';
+    return `<div class="gcard"><span class="x" data-id="${esc(it.id)}" title="remove">&times;</span>${img}<div class="cap">${esc(it.display_name)}</div>${rev}</div>`;
   }).join('');
-
-  thumbsEl.querySelectorAll('.rm').forEach((el) => {
-    el.addEventListener('click', () => removeItem(el.getAttribute('data-id')));
-  });
+  galleryEl.querySelectorAll('.x').forEach((el) => el.addEventListener('click', () => removeItem(el.dataset.id)));
 }
-
 function removeItem(id) {
   wardrobe.items = wardrobe.items.filter((it) => it.id !== id);
   delete wardrobe.thumbs[id];
-  saveWardrobe();
-  renderWardrobe();
+  saveWardrobe(); renderWardrobe();
 }
 
-// ---- image downscaling in the browser ----
+/* image downscaling */
 function fileToImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('could not read this image. HEIC photos are not supported yet, please use JPEG or PNG'));
-    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('could not read this image. HEIC is not supported yet, please use JPEG or PNG')); };
     img.src = url;
   });
 }
-
 function scaleToCanvas(img, maxDim) {
   const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
-  const w = Math.max(1, Math.round(img.width * scale));
-  const h = Math.max(1, Math.round(img.height * scale));
-  const canvas = document.createElement('canvas');
-  canvas.width = w; canvas.height = h;
-  canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-  return canvas;
+  const w = Math.max(1, Math.round(img.width * scale)), h = Math.max(1, Math.round(img.height * scale));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  c.getContext('2d').drawImage(img, 0, 0, w, h); return c;
 }
+function canvasToBlob(c, q) { return new Promise((res) => c.toBlob(res, 'image/jpeg', q)); }
 
-function canvasToBlob(canvas, quality) {
-  return new Promise((res) => canvas.toBlob(res, 'image/jpeg', quality));
-}
-
-async function processFile(file, indexLabel) {
-  setUploadStatus(`Analysing ${indexLabel}...`);
+async function processFile(file, label) {
+  setUploadStatus(`Analysing ${label}...`);
   const img = await fileToImage(file);
   const uploadBlob = await canvasToBlob(scaleToCanvas(img, UPLOAD_MAX_DIM), 0.85);
   const thumbUrl = scaleToCanvas(img, THUMB_MAX_DIM).toDataURL('image/jpeg', 0.7);
-
-  const fd = new FormData();
-  fd.append('photo', uploadBlob, 'photo.jpg');
+  const fd = new FormData(); fd.append('photo', uploadBlob, 'photo.jpg');
   const resp = await fetch('/api/extract', { method: 'POST', body: fd });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || `extraction failed (${resp.status})`);
 
-  extractionCostTotal += (data.cost_usd || 0);  // once per photo, even if it yields several items
+  extractionCostTotal += (data.cost_usd || 0);
   const items = data.items || [];
   let added = 0, skipped = 0, overflow = 0;
   for (const item of items) {
     if (wardrobe.items.some((it) => it.id === item.id)) { skipped++; continue; }
     if (wardrobe.items.length >= MAX_ITEMS) { overflow++; continue; }
-    wardrobe.items.push(item);
-    wardrobe.thumbs[item.id] = thumbUrl;  // items from the same photo share its thumbnail
-    added++;
+    wardrobe.items.push(item); wardrobe.thumbs[item.id] = thumbUrl; added++;
   }
-  saveWardrobe();
-  renderWardrobe();
+  saveWardrobe(); renderWardrobe();
   return { added, skipped, overflow, found: items.length };
 }
 
 photoInput.addEventListener('change', async () => {
   const files = Array.from(photoInput.files || []);
-  photoInput.value = '';  // allow re-selecting the same file later
+  photoInput.value = '';
   if (!files.length) return;
+  if (wardrobe.items.length >= MAX_ITEMS) { setUploadStatus(`Wardrobe is full (${MAX_ITEMS} items). Remove some to add more.`, true); return; }
 
-  if (wardrobe.items.length >= MAX_ITEMS) {
-    setUploadStatus(`Wardrobe is full (${MAX_ITEMS} items). Remove some to add more.`, true);
-    return;
-  }
-
-  uploadBtn.classList.add('disabled');
-  photoInput.disabled = true;
+  uploadBtn.classList.add('disabled'); photoInput.disabled = true;
   let added = 0, skipped = 0, failed = 0, hitCap = false, foundNothing = 0;
-
   for (let i = 0; i < files.length; i++) {
-    if (wardrobe.items.length >= MAX_ITEMS) { hitCap = true; break; }  // stop before billing more
+    if (wardrobe.items.length >= MAX_ITEMS) { hitCap = true; break; }
     try {
       const r = await processFile(files[i], `photo ${i + 1} of ${files.length}`);
       added += r.added; skipped += r.skipped;
       if (r.overflow) hitCap = true;
       if (r.found === 0) foundNothing += 1;
-    } catch (e) {
-      failed++;
-      setUploadStatus(e.message || 'a photo could not be processed', true);
-    }
+    } catch (e) { failed++; setUploadStatus(e.message || 'a photo could not be processed', true); }
   }
-
   const parts = [];
   if (added) parts.push(`${added} item${added === 1 ? '' : 's'} added`);
   if (skipped) parts.push(`${skipped} already in wardrobe`);
@@ -409,35 +409,19 @@ photoInput.addEventListener('change', async () => {
   if (hitCap) parts.push(`stopped at the ${MAX_ITEMS}-item cap`);
   const costNote = extractionCostTotal ? ` Extraction cost so far: $${extractionCostTotal.toFixed(5)}.` : '';
   setUploadStatus((parts.join(', ') || 'nothing added') + '.' + costNote, failed > 0 && added === 0);
-
   renderWardrobe();
 });
 
 clearLink.addEventListener('click', () => {
   if (!wardrobe.items.length) return;
   if (!confirm('Remove all items from this wardrobe? This only clears this browser.')) return;
-  wardrobe = { items: [], thumbs: {} };
-  extractionCostTotal = 0;
-  saveWardrobe();
-  renderWardrobe();
-  setUploadStatus('');
+  wardrobe = { items: [], thumbs: {} }; extractionCostTotal = 0;
+  saveWardrobe(); renderWardrobe(); setUploadStatus('');
 });
 
-// ---- profile (7B): kept in this browser, sent with each styling request ----
-const PROFILE_KEY = 'ws_profile_v1';
-const pEls = {
-  gender: document.getElementById('pGender'),
-  age: document.getElementById('pAge'),
-  body_type: document.getElementById('pBody'),
-  height: document.getElementById('pHeight'),
-  bust: document.getElementById('pBust'),
-  waist: document.getElementById('pWaist'),
-  hip: document.getElementById('pHip'),
-  likes: document.getElementById('pLikes'),
-  avoid: document.getElementById('pAvoid'),
-};
-const profileStatus = document.getElementById('profileStatus');
-
+/* ---------- profile ---------- */
+const pEls = { gender: $('pGender'), age: $('pAge'), body_type: $('pBody'), height: $('pHeight'),
+               bust: $('pBust'), waist: $('pWaist'), hip: $('pHip'), likes: $('pLikes'), avoid: $('pAvoid') };
 function loadProfile() {
   let p = {};
   try { p = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}') || {}; } catch (e) { p = {}; }
@@ -445,146 +429,133 @@ function loadProfile() {
   pEls.gender.value = p.gender || '';
   pEls.age.value = (p.age !== null && p.age !== undefined) ? p.age : '';
   pEls.body_type.value = p.body_type || '';
-  pEls.height.value = m.height || '';
-  pEls.bust.value = m.bust || '';
-  pEls.waist.value = m.waist || '';
-  pEls.hip.value = m.hip || '';
-  pEls.likes.value = p.likes || '';
-  pEls.avoid.value = p.avoid_raw || '';
+  pEls.height.value = m.height || ''; pEls.bust.value = m.bust || '';
+  pEls.waist.value = m.waist || ''; pEls.hip.value = m.hip || '';
+  pEls.likes.value = p.likes || ''; pEls.avoid.value = p.avoid_raw || '';
 }
-
 function currentProfile() {
   const avoidRaw = pEls.avoid.value.trim();
-  const avoidTerms = avoidRaw.split(',').map((s) => s.trim()).filter(Boolean);
   const ageNum = parseInt(pEls.age.value, 10);
   return {
-    gender: pEls.gender.value || '',
-    age: Number.isFinite(ageNum) ? ageNum : null,
+    gender: pEls.gender.value || '', age: Number.isFinite(ageNum) ? ageNum : null,
     body_type: pEls.body_type.value || '',
-    measurements: {
-      height: pEls.height.value.trim(),
-      bust: pEls.bust.value.trim(),
-      waist: pEls.waist.value.trim(),
-      hip: pEls.hip.value.trim(),
-    },
-    likes: pEls.likes.value.trim(),
-    avoid_raw: avoidRaw,
-    avoid_terms: avoidTerms,
-    exclude_needs_review: false,  // keep flagged items visible, marked
+    measurements: { height: pEls.height.value.trim(), bust: pEls.bust.value.trim(), waist: pEls.waist.value.trim(), hip: pEls.hip.value.trim() },
+    likes: pEls.likes.value.trim(), avoid_raw: avoidRaw,
+    avoid_terms: avoidRaw.split(',').map((s) => s.trim()).filter(Boolean),
+    exclude_needs_review: false,
   };
 }
-
 function saveProfile() {
-  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(currentProfile())); } catch (e) { /* quota */ }
-  profileStatus.textContent = 'Profile saved in this browser.';
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(currentProfile())); } catch (e) {}
+  $('profileStatus').textContent = 'Profile saved in this browser.';
 }
-
 Object.values(pEls).forEach((el) => el.addEventListener('change', saveProfile));
 
-// ---- results rendering ----
-function renderItemCard(item) {
-  const src = wardrobe.thumbs[item.id];
-  const img = src
-    ? `<img src="${esc(src)}" alt="${esc(item.display_name)}" loading="lazy">`
-    : `<div class="ph">${esc(item.display_name)}</div>`;
-  const flag = item.needs_review ? '<div class="review-flag">needs review</div>' : '';
-  return `<div class="item-card">
-    ${img}
-    <div class="name">${esc(item.display_name)}</div>
-    ${flag}
-  </div>`;
+/* ---------- rendering (shared) ---------- */
+function renderPItem(name, thumb, needsReview) {
+  const img = thumb ? `<img src="${esc(thumb)}" alt="${esc(name)}" loading="lazy">` : `<div class="ph">${esc(name)}</div>`;
+  const rev = needsReview ? `<div class="rev">needs review</div>` : '';
+  return `<div class="pcard">${img}<div class="nm">${esc(name)}</div>${rev}</div>`;
 }
-
 function renderFill(fill) {
   if (fill.picked) {
     const img = fill.image ? `<img src="${esc(fill.image)}" alt="${esc(fill.title)}" loading="lazy">` : '';
-    return `<div class="fill-card">
-      ${img}
-      <div>
-        <div class="fill-title">${esc(fill.title)}</div>
-        <div class="fill-meta">${esc(fill.source)} &middot; ${esc(fill.price)}</div>
-        <div class="fill-meta">${esc(fill.reason || '')}</div>
+    const attrs = [fill.pattern, fill.fit, fill.material].filter(Boolean).join(' · ');
+    return `<details class="buy">
+      <summary>${img}<div><div class="bt">${esc(fill.title)}</div><div class="bm">${esc(fill.source)} · ${esc(fill.price)}</div></div><span class="chev">▾</span></summary>
+      <div class="body">
+        <p style="margin:.4em 0">${esc(fill.reason || '')}</p>
+        ${attrs ? `<p class="bm" style="margin:.4em 0">${esc(attrs)}</p>` : ''}
         <a href="${esc(fill.link)}" target="_blank" rel="noopener">View on Google Shopping &rarr;</a>
       </div>
-    </div>`;
+    </details>`;
   }
-  return `<div class="not-filled">Missing / to improve: "${esc(fill.gap)}" &mdash; ${esc(fill.reason)}</div>`;
+  return `<div class="note"><strong>To complete / improve:</strong> "${esc(fill.gap)}" &mdash; ${esc(fill.reason)}</div>`;
 }
-
-function renderOutfit(outfit) {
-  const items = (outfit.items || []).map(renderItemCard).join('');
-  const fills = (outfit.gap_fills || []).map(renderFill).join('');
+function renderOutfitCard(o, opts) {
+  const items = (o.items || []).map((it) => renderPItem(it.display_name, it.thumb !== undefined ? it.thumb : wardrobe.thumbs[it.id], it.needs_review)).join('');
+  const fills = (o.gap_fills || []).map(renderFill).join('');
+  const btn = opts.saveBtn
+    ? `<button class="save-btn" data-oi="${opts.index}">Save outfit</button>`
+    : `<button class="save-btn" data-si="${opts.index}">Remove</button>`;
+  const ctx = opts.showCtx && (o.occasion || o.vibe) ? `<div class="muted-s">${esc([o.occasion, o.vibe].filter(Boolean).join(' · '))}</div>` : '';
   return `<div class="outfit">
-    <h3>Rank ${esc(outfit.rank)}</h3>
-    <p class="reason">${esc(outfit.reason)}</p>
+    <div class="outfit-head"><div><div class="rank">Rank ${esc(o.rank)}</div>${ctx}</div>${btn}</div>
+    <p class="reason">${esc(o.reason)}</p>
     <div class="items-row">${items}</div>
-    ${fills ? `<div class="fills">${fills}</div>` : ''}
+    ${fills ? `<div class="buys">${fills}</div>` : ''}
   </div>`;
 }
 
+/* ---------- saved outfits ---------- */
+let saved = [];
+const savedListEl = $('saved-list');
+function loadSaved() { try { saved = JSON.parse(localStorage.getItem(SAVED_KEY) || '[]') || []; } catch (e) { saved = []; } }
+function persistSaved() { try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); } catch (e) {} }
+function renderSaved() {
+  updateNavCount($('navSavedCount'), saved.length);
+  if (!saved.length) { savedListEl.innerHTML = `<div class="empty">No saved outfits yet. When you style an outfit you like, hit &ldquo;Save outfit&rdquo;.</div>`; return; }
+  savedListEl.innerHTML = saved.map((o, i) => renderOutfitCard(o, { saveBtn: false, index: i, showCtx: true })).join('');
+  savedListEl.querySelectorAll('[data-si]').forEach((b) => b.addEventListener('click', () => removeSaved(parseInt(b.dataset.si, 10))));
+}
+function removeSaved(i) { saved.splice(i, 1); persistSaved(); renderSaved(); }
+
+let lastStyle = null;
+function saveOutfit(i, btn) {
+  if (!lastStyle || !lastStyle.outfits[i]) return;
+  const o = lastStyle.outfits[i];
+  saved.push({
+    occasion: lastStyle.occasion, vibe: lastStyle.vibe, rank: o.rank, reason: o.reason,
+    items: (o.items || []).map((it) => ({ display_name: it.display_name, needs_review: it.needs_review, thumb: wardrobe.thumbs[it.id] || null })),
+    gap_fills: o.gap_fills || [],
+  });
+  persistSaved(); renderSaved();
+  btn.textContent = 'Saved ✓'; btn.classList.add('saved'); btn.disabled = true;
+}
+
+/* ---------- styling request ---------- */
+const form = $('styleForm'), statusEl = $('status'), errorEl = $('error'), resultsEl = $('results'), submitBtn = $('submitBtn');
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const occasion = document.getElementById('occasion').value.trim();
+  const occasion = $('occasion').value.trim();
   if (!occasion) return;
-
   if (!wardrobe.items.length) {
-    errorEl.textContent = 'Add at least one clothing photo above before styling.';
-    errorEl.style.display = 'block';
-    return;
+    errorEl.textContent = 'Add at least one clothing photo in the "My wardrobe" tab first.';
+    errorEl.style.display = 'block'; return;
   }
-
   const body = {
-    occasion,
-    vibe: document.getElementById('vibe').value.trim(),
-    budget: document.getElementById('budget').value || null,
-    season: document.getElementById('season').value || null,
-    wardrobe: wardrobe.items,
-    profile: currentProfile(),
+    occasion, vibe: $('vibe').value.trim(),
+    budget: $('budget').value || null, season: $('season').value || null,
+    wardrobe: wardrobe.items, profile: currentProfile(),
   };
-
-  submitBtn.disabled = true;
-  errorEl.style.display = 'none';
-  resultsEl.innerHTML = '';
+  submitBtn.disabled = true; errorEl.style.display = 'none'; resultsEl.innerHTML = '';
   statusEl.textContent = 'Styling in progress, usually a few seconds...';
-
   try {
-    const resp = await fetch('/api/style', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
+    const resp = await fetch('/api/style', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     const data = await resp.json();
     if (!resp.ok) throw new Error(data.error || `request failed (${resp.status})`);
-
     statusEl.textContent = '';
+    lastStyle = { occasion, vibe: body.vibe, outfits: data.outfits || [] };
     let html = '';
-    if (data.structural_gaps && data.structural_gaps.length) {
-      html += `<div class="gaps-box"><strong>Structural gaps detected:</strong> ${data.structural_gaps.map(esc).join('; ')}</div>`;
-    }
-    if (!data.outfits || !data.outfits.length) {
-      html += `<p>No wardrobe items passed filtering for this request, nothing to show. Try a different occasion, or add more clothes.</p>`;
-    } else {
-      html += data.outfits.map(renderOutfit).join('');
-    }
-    html += `<div class="cost-strip">
-      This request: <strong>$${esc(data.total_cost_usd)}</strong> in AI + search calls
-      (ranking $${esc(data.ranking_cost_usd)}, gap-fill $${esc(data.gap_fill_cost_usd)}),
-      ${esc(data.live_searches_used)} live product search(es) used.
-    </div>`;
+    if (data.structural_gaps && data.structural_gaps.length)
+      html += `<div class="gaps-box"><strong>Gaps detected:</strong> ${data.structural_gaps.map(esc).join('; ')}</div>`;
+    if (!data.outfits || !data.outfits.length)
+      html += `<p class="sub">No wardrobe items passed filtering for this request. Try a different occasion, relax your avoid-list, or add more clothes.</p>`;
+    else
+      html += data.outfits.map((o, i) => renderOutfitCard(o, { saveBtn: true, index: i })).join('');
+    html += `<div class="cost-strip">This request: <strong>$${esc(data.total_cost_usd)}</strong> in AI + search calls (ranking $${esc(data.ranking_cost_usd)}, gap-fill $${esc(data.gap_fill_cost_usd)}), ${esc(data.live_searches_used)} live product search(es) used.</div>`;
     resultsEl.innerHTML = html;
+    resultsEl.querySelectorAll('.save-btn[data-oi]').forEach((b) => b.addEventListener('click', () => saveOutfit(parseInt(b.dataset.oi, 10), b)));
   } catch (err) {
-    statusEl.textContent = '';
-    errorEl.textContent = err.message || 'Something went wrong.';
-    errorEl.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-  }
+    statusEl.textContent = ''; errorEl.textContent = err.message || 'Something went wrong.'; errorEl.style.display = 'block';
+  } finally { submitBtn.disabled = false; }
 });
 
-// init
-loadWardrobe();
-renderWardrobe();
+/* ---------- init ---------- */
+loadWardrobe(); renderWardrobe();
 loadProfile();
+loadSaved(); renderSaved();
+showTab('home');
 </script>
 </body>
 </html>
